@@ -802,6 +802,7 @@ def update_1d_figure(substrates, films, large_superlattice, display_mode):
     return fig
 
 app.run_server(
+    host="0.0.0.0", port=10000
     # debug=True
 )
 
