@@ -1,0 +1,42 @@
+Name,Structure,Plane,a,b,c
+Silicon,cubic,"110, 111",5.43,,
+Germanium,cubic,"100, 111",5.65,,
+GaAs,cubic,"100, 111, 110",5.65,,
+GaP,cubic,"100, 111, 110",5.45,,
+GaSb,cubic,"100, 111, 110",6.09,,
+InAs,cubic,"100, 111, 110",6.06,,
+InP,cubic,"100, 111, 110",5.87,,
+InSb,cubic,"100, 111, 110",6.48,,
+ZnS,cubic,"100, 111, 110",5.41,,
+ZnSe,cubic,"100, 111, 110",5.67,,
+ZnTe,cubic,"100, 111, 110",6.1,,
+CdS,hexagonal,"100, 111, 110",4.14,,6.76
+CdSe,hexagonal,"100, 111, 110",4.3,,7.01
+CdTe,cubic,"100, 111, 110",6.48,,
+Sapphire,hexagonal,"C, R, A, M",4.763,,13.003
+DyScO3,orthorhombic,110,5.54,5.71,7.89
+GdScO3,orthorhombic,110,5.45,5.75,7.93
+GGG,cubic,"100, 110, 111",12.38,,
+LaAlO3,cubic,"100, 110, 111",3.82,,
+LiAlO2,tetragonal,"100, 001, 111",5.17,,6.26
+LiGaO2,orthorhombic,"100, 001, 111",5.41,5.01,6.38
+LiNbO3,trigonal,"0001, 1010, 1120",5.15,,13.86
+LiTaO3,trigonal,"0001, 1010, 1120",5.15,,13.78
+LSAT,cubic,"100, 110, 111",3.87,,
+MgAl2O4 - Spinel,cubic,"100, 110, 111",8.09,,
+MgO,cubic,"100, 110, 111",4.21,,
+NdGaO3,orthorhombic,"110, 100, 001",5.43,5.5,7.71
+SrLaAlO4,tetragonal,"110, 100, 001",3.75,,12.63
+SrLaGaO4,tetragonal,"110, 100, 001",3.84,,12.68
+SrTiO3,cubic,"100, 110, 111",3.91,,
+TiO2,tetragonal,"100, 001, 110, 111",4.59,,2.96
+YAG,cubic,"100, 110, 111",12,,
+YAlO3,orthorhombic,"100, 110, 111",5.18,5.31,7.35
+Y:ZrO2 - YSZ,cubic,"100, 110, 111",5.12,,
+ZnO,hexagonal,C,3.25,,5.21
+BaF2,cubic,"100, 111",6.2,,
+CaF2,cubic,"100, 111",5.49,,
+KBr,cubic,"100, 110",6.6,,
+KCl,cubic,"100, 110",6.29,,
+MgF2,tetragonal,"001, 110, 100",4.64,,3.06
+NaCl,cubic,"100, 110",5.64,,

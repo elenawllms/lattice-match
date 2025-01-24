@@ -1,0 +1,103 @@
+body{
+    background: white;
+}
+
+#main-container {
+    margin: 30px auto;
+    width: calc(100vw - 40px);
+    /* border: 1px solid red; */
+}
+
+
+.large-container {
+    background: white;
+    border: 1px solid #eee;
+    box-shadow: 0px 5px 15px -3px rgba(0,0,0,0.1);
+    border-radius: 5px;
+}
+
+fieldset {
+    border: solid 2px black;
+    padding-top: 5px;
+    padding-right: 12px;
+    padding-bottom: 10px;
+    padding-left: 12px;
+    margin: 20px 0px;
+    background: #fafafa;
+}
+legend {
+    float: none;
+    width: inherit;
+    padding: 5px 10px;
+    background: black;
+    color: white;
+    font-size: 20px;
+    border-radius: 5px;
+}
+
+#header {
+    margin-bottom: 20px;
+}
+
+#matches-table {
+    /* background: red; */
+    /* border: 3px solid red; */
+    width: 100%;
+    overflow: scroll;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-size: 12px;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+#manual-entry-dimension {
+    width: 100%;
+    margin-bottom: 10px;
+}
+/* 
+.graph {
+    border: 1px solid black;
+    margin: 5px;
+} */
+
+h1 {
+    font-size: 30px;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    font-size: 18px;
+    margin-top: 10px;;
+}
+
+h3 a {
+    color: black;
+}
+
+.modal-link {
+    color: darkorange !important;
+    text-decoration: underline !important;
+    cursor: pointer;
+}
+
+#display-warning {
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+#substrates-list, #films-list {
+    border: 1px solid black;
+    width: 100%;
+}
+
+#substrates-list, #films-list {
+    margin-bottom: 20px;
+}
+
+Input {
+    font-size: 12px;
+}
