@@ -35,12 +35,12 @@ def costFunction1d(a_mismatch, mcia, large_superlattice=0.5):
 
 # SUBSTRATE / FILM DATA ----
 sublattices_2d = pd.read_csv("/opt/render/project/src/src/assets/data/sublattices_2d.csv")
-sublattices_1d = pd.read_csv("./src/assets/data/sublattices_1d.csv")
+sublattices_1d = pd.read_csv("/opt/render/project/src/src/assets/data/sublattices_1d.csv")
 
 substrates = pd.concat([sublattices_2d["substrate"], sublattices_1d["substrate"]]).unique()
 
-films_2d = pd.read_csv("src/assets/data/stable_films_2d.csv")
-films_1d = pd.read_csv("src/assets/data/stable_films_1d.csv")
+films_2d = pd.read_csv("/opt/render/project/src/src/assets/data/stable_films_2d.csv")
+films_1d = pd.read_csv("/opt/render/project/src/src/assets/data/stable_films_1d.csv")
 films = pd.concat([films_2d["name"] + " " +  films_2d["crystal_system"], films_1d["name"] + " " +  films_1d["crystal_system"]]).unique()
 
     
