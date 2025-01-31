@@ -10,6 +10,7 @@ import numpy as np
 from plotly import graph_objects as go
 import dash_bootstrap_components as dbc
 
+deploying = True
 
 # GLOBAL VARIABLES ----
 ELEMENTS = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
@@ -33,14 +34,20 @@ def costFunction2d(a_mismatch, b_mismatch, mcia, single_double=0.5, large_superl
 def costFunction1d(a_mismatch, mcia, large_superlattice=0.5):
     return np.abs(a_mismatch) * (mcia**(1-large_superlattice))
 
+def addRenderPrefix(PATH, deploying):
+    if deploying:
+        return "/opt/render/project/src/" + PATH
+    else: return PATH
+
 # SUBSTRATE / FILM DATA ----
-sublattices_2d = pd.read_csv("/opt/render/project/src/src/assets/data/sublattices_2d.csv")
-sublattices_1d = pd.read_csv("/opt/render/project/src/src/assets/data/sublattices_1d.csv")
+sublattices_2d = pd.read_csv(addRenderPrefix("src/assets/data/sublattices_2d.csv", deploying))
+sublattices_1d = pd.read_csv(addRenderPrefix("src/assets/data/sublattices_1d.csv", deploying))
 
 substrates = pd.concat([sublattices_2d["substrate"], sublattices_1d["substrate"]]).unique()
 
-films_2d = pd.read_csv("/opt/render/project/src/src/assets/data/stable_films_2d.csv")
-films_1d = pd.read_csv("/opt/render/project/src/src/assets/data/stable_films_1d.csv")
+#/opt/render/project/src/src
+films_2d = pd.read_csv(addRenderPrefix("src/assets/data/stable_films_2d.csv", deploying))
+films_1d = pd.read_csv(addRenderPrefix("src/assets/data/stable_films_1d.csv", deploying))
 films = pd.concat([films_2d["name"] + " " +  films_2d["crystal_system"], films_1d["name"] + " " +  films_1d["crystal_system"]]).unique()
 
     
@@ -380,11 +387,11 @@ def getLayout():
         dbc.Col([
             dbc.Row(dbc.Col(header)),
             dbc.Row([
-                dbc.Col(select_data, width=5),
-                dbc.Col(find_matches, width=7)
+                dbc.Col(select_data, sm=5),
+                dbc.Col(find_matches, sm=7)
             ])
-        ], width=7),
-        dbc.Col([display], width=5)
+        ], md=7),
+        dbc.Col([display], md=5)
     ]),
         dcc.Store(id="selected-substrates"),
         dcc.Store(id="selected-films-2d"),
@@ -801,11 +808,12 @@ def update_1d_figure(substrates, films, large_superlattice, display_mode):
     ))
     return fig
 
-app.run_server(
-    host="0.0.0.0", port=10000
-    # debug=True
-)
-
+if deploying:
+    app.run_server(
+        host="0.0.0.0", port=10000    
+    )
+else:
+    app.run_server(debug=True)
 
 
 
