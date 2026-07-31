@@ -1,0 +1,1009 @@
+{
+  "materials": 24241,
+  "rows_2d": 74459,
+  "rows_1d": 9714,
+  "skipped": [
+    {
+      "formula": "Ag2F5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ag2Mo2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ag2S2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ag3AsF12",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgBi2F12",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgMo6Cl13",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgPbF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgPdF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgPtF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgRhF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgSO4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgSb2F12",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AgSnF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Al11Re4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Al2(FeSi)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Al23B50",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Al27(FeNi2)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Al2SiO5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Al53Fe17Si12",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AlCdCl4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AlCu",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=65.49, gamma=71.44)"
+    },
+    {
+      "formula": "AlSeCl7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AlV2O4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AlVO4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "As(BrF2)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "As(IF2)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "As2S3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "As3(HO2)5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AsPbF7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Au(OF3)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "AuCl2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "B(HO)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "B10(Pb2O7)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "BF3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba(Cr5S8)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba11(Cd4Bi7)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba13Bi11O36",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba16Nb5N19",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba2As2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba2As6O11",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba2Ru7O18",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba2V2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba2Zn7F18",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba3(RhO2)14",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba3(SbO3)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba3Cr2O8",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba3Cr2O8",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=102.11, gamma=111.38)"
+    },
+    {
+      "formula": "Ba3Ga4O9",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba3Te4O11",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba3WO6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba4(PtO3)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba4Bi3F17",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba4Fe4O11",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba4Y3F17",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba5(TiN3)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba6Cu11F34",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba6Cu34S27",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba8(Bi2O7)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba9Nb10O30",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ba9Rh8O27",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "BaCeI4",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=113.76, gamma=102.02)"
+    },
+    {
+      "formula": "BaRe2O9",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "BaSb2F12",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "BaV8O16",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi(PdO2)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi14MoO24",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi2(S2O7)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi2Se4Cl7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi2Te7Cl8",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi3(TeCl5)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi3SbO7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Bi4O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "BiAuCl6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca(CuSn)2",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=106.05, gamma=90.18)"
+    },
+    {
+      "formula": "Ca(Mo3S4)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca2Se3O8",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca2V2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca3Al3N5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca3Fe3N5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca3Mn3N5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca4HfN4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca4P6O19",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca4TiN4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca4ZrN4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca5Au2",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=97.07, gamma=89.92)"
+    },
+    {
+      "formula": "Ca6Cu2Sn7",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=93.71, gamma=107.78)"
+    },
+    {
+      "formula": "Ca8Al3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca8In3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ca9La5Cl33",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CaAs3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CaCr2F12",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CaGeO3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CaP3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CaSiO3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cd(HO)2",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=117.45, gamma=91.21)"
+    },
+    {
+      "formula": "Cd2P2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cd2Te2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CdAuO2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CdP4O11",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ce14Si11Ni6",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=113.30, gamma=97.01)"
+    },
+    {
+      "formula": "Ce2Sn3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ce3CI5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ce4C4Br3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ce5Cu19P12",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=60.01, gamma=89.64)"
+    },
+    {
+      "formula": "Ce5O9",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ce7C3I10",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CeNbO4",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=112.13, gamma=95.02)"
+    },
+    {
+      "formula": "CeP5O14",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CeU4O10",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=90.10, gamma=119.86)"
+    },
+    {
+      "formula": "ClOF3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Co(NO3)4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Co23O32",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Co2As2O5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cr(Bi7O12)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs(Bi2Te3)2",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=101.11, gamma=90.07)"
+    },
+    {
+      "formula": "Cs(SbS2)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs(SbSe2)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs2CN2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs2Hg3I8",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=83.95, gamma=70.80)"
+    },
+    {
+      "formula": "Cs2PSe5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs2PbO2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs2Sb8S13",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs3(Cr5Se8)4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs3B3Se10",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs3InP2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs3LaN18",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs3Te22",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs4(BS)9",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs4(BSe)9",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs4Cu3F10",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=58.54, gamma=65.95)"
+    },
+    {
+      "formula": "Cs4FeO3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs4In2S5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs4Si3O8",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cs7(In2Bi3)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CsAuSe3",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=81.02, gamma=64.64)"
+    },
+    {
+      "formula": "CsHg",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CsS3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CsSnS3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CsSnSe3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cu2PO4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Cu3(PO4)2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuAgF3",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=90.67, gamma=90.18)"
+    },
+    {
+      "formula": "CuAuF5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuMoF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuP10",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuP4O11",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuPbF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuPdF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuPtF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "CuSnF6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Dy2Au5F21",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Dy2Te5O13",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Dy4(Al8Pd3)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Dy4(Al8Pt3)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Dy6Se11",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "DyBO3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "DyGaCu",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=84.33, gamma=113.23)"
+    },
+    {
+      "formula": "DySbO4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er2(SeO3)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er2Au5F21",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er2Te5O13",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er3Pb4F17",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er3TaO7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er4(Al8Pd3)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er4(Al8Pt3)3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er4Zr3O12",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er6CoBr10",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Er6NiI10",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "ErSbO4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Eu8In3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "EuGa",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "EuGeS3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Fe(SiP)4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Fe2B2O5",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Fe2P2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Fe4As5O13",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Fe7(AsO4)6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "FeCl3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "FeF6",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=89.57, gamma=107.80)"
+    },
+    {
+      "formula": "FeO",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=74.12, gamma=61.15)"
+    },
+    {
+      "formula": "FePO4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "FeSeCl7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "FeSnO3",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "FeTeBr7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "FeTeCl7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ga31Mo6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "GaCl3",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=61.40, gamma=60.35)"
+    },
+    {
+      "formula": "GaHgCl4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Gd2Ge2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Gd2HgO4",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=95.90, gamma=105.04)"
+    },
+    {
+      "formula": "Gd3AuO6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Gd3NCl6",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Gd4B3C4",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Gd6CoBr10",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Gd6CoCl10",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "GdZr3F15",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "Ge2S3Br2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "GeAs",
+      "system": "Monoclinic",
+      "reason": "not in standard setting (alpha=104.87, gamma=102.88)"
+    },
+    {
+      "formula": "GeP2O7",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    },
+    {
+      "formula": "H3F2",
+      "system": "Triclinic",
+      "reason": "no planes defined for this crystal system"
+    }
+  ],
+  "skipped_total": 718,
+  "validation_problems": []
+}

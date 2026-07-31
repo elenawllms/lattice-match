@@ -606,12 +606,14 @@ def update_best_2d_matches(superlattices, single_double, large_superlattice, dis
     CHUNK = 10
     for lo in range(0, RESOLUTION, CHUNK):
         hi = min(lo + CHUNK, RESOLUTION)
-        # Argument order preserved from the original (grid value passed as
-        # `sub`). This disagrees with update_table, which passes the substrate
-        # as `sub`; reconciling the two is a Stage 1 change, made under test.
+        # Substrate first, grid point (the film) second -- matching
+        # update_table and the definition of strain in the Learn More text.
+        # The original passed these the other way round, so the Voronoi and
+        # the heatmap normalised strain by the film and flipped its sign,
+        # ranking matches differently from the table beneath them.
         cost = costFunction2d(
-            mismatch(X[lo:hi, :, None], sub_a),
-            mismatch(Y[lo:hi, :, None], sub_b),
+            mismatch(sub_a, X[lo:hi, :, None]),
+            mismatch(sub_b, Y[lo:hi, :, None]),
             sub_mcia,
             single_double,
             large_superlattice,

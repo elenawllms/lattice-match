@@ -49,6 +49,12 @@ PLANES_BY_SYSTEM: dict[str, tuple[str, ...]] = {
 #: Tolerance, in degrees, for treating a lattice angle as a right angle.
 RIGHT_ANGLE_TOL = 0.5
 
+#: Columns a cached Materials Project fetch must carry to be reusable.
+REQUIRED_MATERIAL_COLUMNS = {
+    "formula", "elements", "num_elements", "crystal_system", "point_group",
+    "centring", "a", "b", "c", "alpha", "beta", "gamma",
+}
+
 #: Films larger than this along any axis are excluded, matching the note in the
 #: app's film modal ("lattice parameters exceeding 16A are excluded").
 MAX_PARAM = 16.0
@@ -83,7 +89,16 @@ def fetch_stable_materials(
     standard form, which costs ~7 ms per material.
     """
     if cache is not None and cache.exists():
-        return pd.read_parquet(cache)
+        cached = pd.read_parquet(cache)
+        missing = REQUIRED_MATERIAL_COLUMNS - set(cached.columns)
+        if missing:
+            # A cache written before a schema change would otherwise be used
+            # silently, and the defaults are not safe: a missing `centring`
+            # would treat every R-centred material as primitive, quietly
+            # producing the wrong hexagonal A- and R-plane meshes.
+            print(f"cache {cache} is missing {sorted(missing)}; re-fetching")
+        else:
+            return cached
 
     from mp_api.client import MPRester  # imported lazily; build-time only
     from pymatgen.symmetry.analyzer import SpacegroupAnalyzer

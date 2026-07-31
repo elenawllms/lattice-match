@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -16,8 +17,19 @@ from pipeline.build import BuildReport, build_nets, build_tables
 from pipeline.colors import assign_colors
 
 REPO = Path(__file__).resolve().parents[2]
-SHIPPED = REPO / "src" / "assets" / "data"
 CRYSTEC = REPO / "pipeline" / "data" / "crystec.csv"
+CURRENT = REPO / "src" / "assets" / "data"
+
+# The tables as originally shipped, before any correction, captured from commit
+# 68361ec. These are the baseline the golden diff is against. They must NOT be
+# read from src/assets/data -- that directory now holds the CORRECTED output, so
+# comparing against it would make every assertion below vacuously true.
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+
+
+def original(name: str) -> pd.DataFrame:
+    """Load an originally-shipped table from the gzipped fixtures."""
+    return pd.read_csv(FIXTURES / f"original_{name}.csv.gz")
 
 # Faces whose geometry is expected to move, because the hexagonal handler now
 # receives a real c. Sapphire is the only included substrate with non-basal
@@ -57,20 +69,20 @@ def _geometry_diff(old: pd.DataFrame, new: pd.DataFrame, cols: list[str]) -> set
 
 def test_2d_only_expected_faces_changed(regenerated):
     sub_2d, _, _ = regenerated
-    old = pd.read_csv(SHIPPED / "sublattices_2d.csv")
+    old = original("sublattices_2d")
     assert _geometry_diff(old, sub_2d, ["a", "b", "mcia"]) == EXPECTED_CHANGED_FACES
 
 
 def test_1d_geometry_is_untouched(regenerated):
     _, sub_1d, _ = regenerated
-    old = pd.read_csv(SHIPPED / "sublattices_1d.csv")
+    old = original("sublattices_1d")
     assert _geometry_diff(old, sub_1d, ["a", "mcia"]) == set()
 
 
 def test_only_trigonal_faces_were_added(regenerated):
     sub_2d, sub_1d, _ = regenerated
-    old_2d = pd.read_csv(SHIPPED / "sublattices_2d.csv")
-    old_1d = pd.read_csv(SHIPPED / "sublattices_1d.csv")
+    old_2d = original("sublattices_2d")
+    old_1d = original("sublattices_1d")
     assert set(sub_2d.substrate) - set(old_2d.substrate) == EXPECTED_NEW_FACES_2D
     assert set(sub_1d.substrate) - set(old_1d.substrate) == EXPECTED_NEW_FACES_1D
 
@@ -78,8 +90,8 @@ def test_only_trigonal_faces_were_added(regenerated):
 def test_no_faces_were_lost(regenerated):
     """The corrections must not drop anything the old pipeline produced."""
     sub_2d, sub_1d, _ = regenerated
-    old_2d = pd.read_csv(SHIPPED / "sublattices_2d.csv")
-    old_1d = pd.read_csv(SHIPPED / "sublattices_1d.csv")
+    old_2d = original("sublattices_2d")
+    old_1d = original("sublattices_1d")
     assert not set(old_2d.substrate) - set(sub_2d.substrate)
     assert not set(old_1d.substrate) - set(sub_1d.substrate)
 
@@ -99,7 +111,7 @@ def test_sapphire_m_plane_now_uses_c(regenerated):
     assert one_to_one["b"].iloc[0] == pytest.approx(13.003, rel=1e-9)
 
     # What the shipped CSV had: c collapsed onto a.
-    old = pd.read_csv(SHIPPED / "sublattices_2d.csv")
+    old = original("sublattices_2d")
     old_one_to_one = old[
         (old.substrate == "Sapphire (M)") & (old.dimensions == "(a × b)")
     ]
@@ -125,8 +137,8 @@ def test_skipped_faces_are_only_oblique_111_planes(regenerated):
 def test_output_schema_matches_the_app(regenerated):
     """app.py reads these column names directly."""
     sub_2d, sub_1d, _ = regenerated
-    assert list(sub_2d.columns) == list(pd.read_csv(SHIPPED / "sublattices_2d.csv").columns)
-    assert list(sub_1d.columns) == list(pd.read_csv(SHIPPED / "sublattices_1d.csv").columns)
+    assert list(sub_2d.columns) == list(original("sublattices_2d").columns)
+    assert list(sub_1d.columns) == list(original("sublattices_1d").columns)
 
 
 def test_color_column_format_is_preserved(regenerated):
@@ -151,7 +163,7 @@ def test_film_nets_use_the_corrected_hexagonal_geometry():
     _films_2d, films_1d, _skipped = build_film_nets(materials)
     assert films_1d["a"].iloc[0] == pytest.approx(3.189)
 
-    shipped = pd.read_csv(SHIPPED / "stable_films_1d.csv")
+    shipped = original("stable_films_1d")
     assert shipped[shipped.formula == "GaN"]["a"].iloc[0] == pytest.approx(5.192, abs=1e-3)
 
 
@@ -180,3 +192,48 @@ def test_monoclinic_materials_off_standard_setting_are_skipped():
     films_2d, _films_1d, skipped = build_film_nets(materials)
     assert films_2d.empty
     assert "standard setting" in skipped[0]["reason"]
+
+
+def test_fixtures_are_the_pre_correction_baseline():
+    """Guard against the golden diff going vacuous.
+
+    src/assets/data now holds the CORRECTED tables. If the fixtures were ever
+    refreshed from there, every comparison above would compare output against
+    itself and silently pass. Assert the baseline still contains the original,
+    wrong Sapphire values.
+    """
+    old = original("sublattices_2d")
+    m = old[(old.substrate == "Sapphire (M)") & (old.dimensions == "(a × b)")]
+    assert m["b"].iloc[0] == pytest.approx(4.763), "fixture is no longer the pre-correction baseline"
+
+    current = pd.read_csv(CURRENT / "sublattices_2d.csv")
+    cm = current[(current.substrate == "Sapphire (M)") & (current.dimensions == "(a × b)")]
+    assert cm["b"].iloc[0] == pytest.approx(13.003), "shipped data is missing the correction"
+
+
+def test_shipped_data_matches_what_the_pipeline_produces(regenerated):
+    """src/assets/data must be regenerable from pipeline/ -- no manual edits.
+
+    Compared per substrate face on sorted numeric columns rather than row by
+    row: a CSV round trip loses the last bits of float precision, which can
+    reorder rows that sort on those floats and misalign an elementwise compare.
+    """
+    sub_2d, sub_1d, _ = regenerated
+    for name, built in [("sublattices_2d", sub_2d), ("sublattices_1d", sub_1d)]:
+        shipped = pd.read_csv(CURRENT / f"{name}.csv")
+        assert len(shipped) == len(built), (
+            f"{name}: shipped {len(shipped)} rows, pipeline builds {len(built)} "
+            f"-- run `python -m pipeline.build --out src/assets/data`"
+        )
+        assert list(shipped.columns) == list(built.columns)
+        assert set(shipped.substrate) == set(built.substrate)
+
+        numeric = [c for c in ("a", "b", "mcia", "R", "G", "B") if c in shipped.columns]
+        for face in sorted(set(built.substrate)):
+            s = shipped[shipped.substrate == face]
+            b = built[built.substrate == face]
+            assert len(s) == len(b), f"{name}/{face}: {len(s)} vs {len(b)} rows"
+            for col in numeric:
+                assert np.allclose(np.sort(s[col].to_numpy()), np.sort(b[col].to_numpy()),
+                                   rtol=1e-9, atol=1e-12), f"{name}/{face}/{col} differs"
+            assert sorted(s["dimensions"]) == sorted(b["dimensions"])

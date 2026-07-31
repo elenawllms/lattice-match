@@ -1,0 +1,34 @@
+{
+  "substrates_in_source": 41,
+  "substrates_excluded": [
+    {
+      "substrate": "CdS",
+      "reason": "Plane column holds cubic Miller indices (100/111/110) on a hexagonal structure; needs correct hexagonal planes from Crystec before it can be included"
+    },
+    {
+      "substrate": "CdSe",
+      "reason": "Plane column holds cubic Miller indices (100/111/110) on a hexagonal structure; needs correct hexagonal planes from Crystec before it can be included"
+    }
+  ],
+  "faces_built": 102,
+  "faces_skipped": [
+    {
+      "face": "LiAlO2 (111)",
+      "reason": "tetragonal plane '111' is not supported"
+    },
+    {
+      "face": "LiGaO2 (111)",
+      "reason": "orthorhombic plane '111' is not supported"
+    },
+    {
+      "face": "TiO2 (111)",
+      "reason": "tetragonal plane '111' is not supported"
+    },
+    {
+      "face": "YAlO3 (111)",
+      "reason": "orthorhombic plane '111' is not supported"
+    }
+  ],
+  "rows_2d": 7343,
+  "rows_1d": 384
+}
