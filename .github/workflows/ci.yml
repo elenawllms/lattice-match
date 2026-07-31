@@ -38,10 +38,36 @@ jobs:
             exit 1
           fi
 
+      # Encoding must be byte-reproducible for this to work. It was not at
+      # first: pandas' default CSV parser is lossy in the last bit and the
+      # category ordering came from library internals, so the bundles matched
+      # on macOS and differed on Linux. Both are now pinned.
       - name: Confirm the shipped bundles match the CSVs
         run: |
           python -m pipeline.encode --data src/assets/data --out /tmp/bundles
+          status=0
           for f in superlattices_2d superlattices_1d films_2d films_1d; do
-            cmp "/tmp/bundles/$f.bin" "web/data/$f.bin" \
-              || { echo "::error::web/data/$f.bin is stale; re-run pipeline.encode"; exit 1; }
+            if ! cmp -s "/tmp/bundles/$f.bin" "web/data/$f.bin"; then
+              status=1
+              echo "::error::web/data/$f.bin differs from a fresh encode"
+              echo "  committed: $(wc -c < "web/data/$f.bin") bytes, sha $(sha256sum < "web/data/$f.bin" | cut -c1-16)"
+              echo "  rebuilt:   $(wc -c < "/tmp/bundles/$f.bin") bytes, sha $(sha256sum < "/tmp/bundles/$f.bin" | cut -c1-16)"
+              echo "  first differing byte: $(cmp "/tmp/bundles/$f.bin" "web/data/$f.bin" 2>&1 || true)"
+              # Which column does that offset fall in?
+              python - "$f" <<'PYEOF'
+          import json, sys
+          meta = json.load(open(f"web/data/{sys.argv[1]}.meta.json"))
+          off = int(__import__("subprocess").run(
+              ["cmp", f"/tmp/bundles/{sys.argv[1]}.bin", f"web/data/{sys.argv[1]}.bin"],
+              capture_output=True, text=True).stdout.split("byte ")[1].split(",")[0]) - 1
+          for name, c in sorted(meta["columns"].items(), key=lambda kv: kv[1]["offset"]):
+              if c["offset"] <= off:
+                  hit = name
+          print(f"  offset {off} falls in column: {hit}")
+PYEOF
+            fi
           done
+          if [ "$status" -ne 0 ]; then
+            echo "Re-run: python -m pipeline.encode --data src/assets/data --out web/data"
+            exit 1
+          fi

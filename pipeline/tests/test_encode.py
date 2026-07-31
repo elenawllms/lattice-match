@@ -196,3 +196,49 @@ def test_duplicate_column_names_are_rejected():
     w.numeric("b", np.array([1.0, 2.0]))
     with pytest.raises(ValueError, match="duplicate column"):
         w.numeric("b", np.array([3, 4]), "uint8")
+
+
+# --- determinism -----------------------------------------------------------
+# CI byte-compares freshly encoded bundles against the committed ones. That
+# only works if encoding is reproducible, and the first CI run showed it was
+# not: the bundles were identical on macOS but differed on Linux, because the
+# category ordering came from pandas internals rather than being pinned.
+
+
+def test_dictionary_order_is_code_point_sorted():
+    """Pinned explicitly, so the ordering cannot vary by platform or library
+    version. Includes the non-ASCII characters the real data carries."""
+    values = pd.Series(["(b × a)", "(a × b)", "(2√5 a × b)", "(a × b)"])
+    w = BundleWriter()
+    w.dictionary("dimensions", values)
+    assert w.dictionaries["dimensions"] == sorted({"(b × a)", "(a × b)", "(2√5 a × b)"})
+
+
+def test_dictionary_columns_round_trip(superlattice_frame):
+    """The gap that let the non-determinism through: earlier tests decoded only
+    the numeric columns, so a reordered dictionary passed everything."""
+    blob, meta = encode_superlattices(superlattice_frame)
+    for col in ("substrate", "dimensions", "angle"):
+        assert decode_dictionary(blob, meta, col) == [
+            str(v) for v in superlattice_frame[col]
+        ], f"{col} does not round-trip"
+
+
+def test_encoding_is_byte_reproducible(superlattice_frame):
+    """Same input, same bytes -- what CI's comparison depends on."""
+    first, meta_a = encode_superlattices(superlattice_frame)
+    second, meta_b = encode_superlattices(superlattice_frame.copy())
+    assert first == second
+    assert meta_a == meta_b
+
+
+def test_shuffled_input_gives_the_same_dictionary(superlattice_frame):
+    """Category order must depend only on the set of values, not on the order
+    they happen to appear in, which is what made it library-dependent."""
+    a, _ = encode_superlattices(superlattice_frame)
+    shuffled = superlattice_frame.sample(frac=1, random_state=0).reset_index(drop=True)
+    _, meta = encode_superlattices(shuffled)
+    _, meta_orig = encode_superlattices(superlattice_frame)
+    for col in ("substrate", "dimensions", "angle"):
+        assert meta["dictionaries"][col] == meta_orig["dictionaries"][col]
+    assert a  # silence unused

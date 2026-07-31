@@ -79,14 +79,27 @@ class BundleWriter:
         self._add(name, np.asarray(values), dtype)
 
     def dictionary(self, name: str, values: pd.Series) -> None:
-        """Store repeated strings as indices into a shared string table."""
-        cat = pd.Categorical(values)
-        table = [str(c) for c in cat.categories]
-        dtype = "uint8" if len(table) < 256 else "uint16" if len(table) < 65536 else "uint32"
-        if len(table) >= 2**32:
+        """Store repeated strings as indices into a shared string table.
+
+        Categories are ordered with Python's `sorted`, which compares strings
+        by code point and is locale-independent, rather than letting pandas
+        choose. Relying on the library's internal ordering made the output
+        non-reproducible across platforms: the values decoded correctly either
+        way, so every test passed, but the bytes differed and CI's
+        byte-comparison against the committed bundles failed on Linux.
+        """
+        categories = sorted({str(v) for v in values})
+        if len(categories) >= 2**32:
             raise ValueError(f"{name}: too many distinct values to index")
-        self._add(name, cat.codes, dtype)
-        self.dictionaries[name] = table
+        dtype = (
+            "uint8" if len(categories) < 256
+            else "uint16" if len(categories) < 65536
+            else "uint32"
+        )
+        index = {c: i for i, c in enumerate(categories)}
+        codes = np.fromiter((index[str(v)] for v in values), dtype=dtype, count=len(values))
+        self._add(name, codes, dtype)
+        self.dictionaries[name] = categories
 
     def element_masks(self, name: str, element_lists: pd.Series) -> None:
         """Pack each row's element set into MASK_WORDS uint32s, row-major."""
@@ -169,7 +182,11 @@ def main(argv: list[str] | None = None) -> int:
         ("films_1d", encode_films, "stable_films_1d.csv", False),
     ]:
         csv_path = args.data / csv_name
-        df = pd.read_csv(csv_path)
+        # float_precision="round_trip" guarantees the parsed doubles are exactly
+        # those that were written, on any platform and pandas build. The default
+        # fast parser is allowed to differ in the last bit, which would change
+        # the encoded bytes without changing any value enough to fail a test.
+        df = pd.read_csv(csv_path, float_precision="round_trip")
         blob, meta = fn(df)
         meta["file"] = f"{name}.bin"
         (args.out / f"{name}.bin").write_bytes(blob)
