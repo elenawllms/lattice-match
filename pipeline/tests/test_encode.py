@@ -25,7 +25,7 @@ from pipeline.encode import (
 )
 
 REPO = Path(__file__).resolve().parents[2]
-BUNDLES = REPO / "web" / "public" / "data"
+BUNDLES = REPO / "web" / "data"
 
 NUMPY_DTYPES = {
     "float32": np.float32, "float64": np.float64,

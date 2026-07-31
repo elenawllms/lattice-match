@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lattice Matcher | Falson Lab</title>
+<link rel="icon" href="assets/favicon/favicon.ico" sizes="any">
+<link rel="icon" href="assets/favicon/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
+<link rel="manifest" href="assets/favicon/site.webmanifest">
+<link rel="stylesheet" href="src/ui/style.css">
+</head>
+<body>
+
+<div id="main-container">
+  <div class="grid">
+
+    <div class="left">
+      <section class="card" id="header">
+        <h1>Lattice Matching to Commercially Available Substrates</h1>
+        <h3>Designed by the <a href="https://epitaxy.caltech.edu/">Falson Lab at Caltech</a></h3>
+        <p>
+          This program is designed to help you find commercially available substrates that match
+          the lattice parameters of your material.
+          <a class="modal-link" id="learn-more">Learn more about the tool.</a>
+        </p>
+      </section>
+
+      <div class="row">
+        <section class="card" id="select-data">
+          <h2>Select Data</h2>
+
+          <h3>Substrates</h3>
+          <p>Currently selected <a class="modal-link" id="open-substrates">(modify)</a></p>
+          <div class="readout" id="substrates-list">All substrates selected</div>
+
+          <h3>Films</h3>
+          <p>Currently selected <a class="modal-link" id="open-films">(modify)</a></p>
+          <div class="readout" id="films-list">No films selected</div>
+
+          <h3>Single vs. Double-Axis Matching</h3>
+          <input type="range" id="single-double" min="0.05" max="1" step="0.05" value="0.5">
+          <div class="slider-marks"><span>Single</span><span>Double</span></div>
+
+          <h3>Allow large superlattices</h3>
+          <input type="range" id="large-super" min="0.05" max="1" step="0.05" value="0.5">
+          <div class="slider-marks"><span>No</span><span>Yes</span></div>
+        </section>
+
+        <section class="card" id="find-matches">
+          <h2>Find Matches</h2>
+          <div class="table-wrap">
+            <table id="matches-table">
+              <thead><tr id="matches-head"></tr></thead>
+              <tbody id="matches-body"></tbody>
+            </table>
+          </div>
+          <div class="table-foot">
+            <button id="page-prev" class="btn-sm">&larr;</button>
+            <span id="page-status">&mdash;</span>
+            <button id="page-next" class="btn-sm">&rarr;</button>
+            <button id="download-csv" class="btn-sm">Download CSV</button>
+          </div>
+
+          <h3>Manually enter lattice parameters</h3>
+          <p>Currently selected: <span id="selected-film">Manual Entry</span></p>
+          <div class="radio-row">
+            <label><input type="radio" name="dimension" value="2" checked> Square/Rectangle</label>
+            <label><input type="radio" name="dimension" value="1"> Triangle</label>
+          </div>
+          <div class="field"><label for="a-input">a (Å):</label>
+            <input type="number" id="a-input" value="5" step="0.001"></div>
+          <div class="field" id="b-field"><label for="b-input">b (Å):</label>
+            <input type="number" id="b-input" value="5" step="0.001"></div>
+        </section>
+      </div>
+    </div>
+
+    <section class="card right" id="display">
+      <h2>Display</h2>
+      <div class="radio-row" id="display-mode">
+        <label><input type="radio" name="mode" value="Scatter" checked> Scatter</label>
+        <label><input type="radio" name="mode" value="Voronoi"> Voronoi</label>
+        <label><input type="radio" name="mode" value="Heatmap"> Mismatch Heatmap</label>
+      </div>
+      <p class="note" id="display-note"></p>
+      <h3>Square/Rectangular Lattices</h3>
+      <div id="figure-2d" class="graph"></div>
+      <h3>Triangular Lattices</h3>
+      <div id="figure-1d" class="graph"></div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-backdrop" id="methodology-modal" hidden>
+  <div class="modal">
+    <header><h2>Information</h2><button class="modal-close">&times;</button></header>
+    <div class="modal-body">
+      <p>This tool finds periodic substrate-film matches for simple crystal geometries
+      (square/rectangular planes such as cubic (001), and triangular planes as in cubic (111)
+      or hexagonal (0001)). Enter lattice parameters below the table to find the top matching
+      substrates among those selected at left. For any substrate selection, the site also maps
+      the best match at every point in 2D lattice parameter space (Voronoi diagram) and shows
+      the quality of that match (Mismatch Heatmap).</p>
+
+      <h3>Select materials</h3>
+      <p>Choose substrates and films in the Select Data panel. Film data comes from the
+      <a href="https://next-gen.materialsproject.org/">Materials Project</a> and can be filtered
+      to obtain a class of films of interest. The substrates are all commercially available from
+      Crystec, and empirical structural constants are used. The site precomputes reasonable
+      superlattices which a film might match to; thus a particular substrate face might match
+      about 10&ndash;15 different film geometries at different angles. Substrate superlattices
+      are shown in colour and films as black points. Hovering over a substrate shows its MCIA
+      and the geometry of each superlattice.</p>
+
+      <h3>Find matches</h3>
+      <p>Click any film dot to update the table, or enter lattice parameters manually. The table
+      then lists optimal matches. Change the sliders at left to customise the ranking.</p>
+
+      <h3>User-defined parameters</h3>
+      <p>The lattice mismatch formula is a measure of strain, a simple percentage difference
+      between the matching lengths of substrate and film. Minimising the minimum coincident
+      interface area (MCIA) also improves match quality, so a slider is offered to penalise
+      large coincident areas; sliding to &ldquo;Yes&rdquo; removes that penalty entirely.
+      Similarly, for square/rectangular faces you can favour single-axis matches (one axis very
+      well aligned) or double-axis matches (both axes fairly well aligned). In the Display plot,
+      a larger substrate dot means lower MCIA, and thus a better match, all else equal.</p>
+
+      <h3>Voronoi diagram &amp; mismatch heatmap</h3>
+      <p>The Voronoi diagram shows the best matching substrate at every point in 2D parameter
+      space, and the mismatch heatmap shows the quality of that best match. This many-to-many
+      matching gives insight beyond growing a single film: it describes how to grow many films,
+      identifies the most valuable substrates for a class of new materials, and shows which sets
+      of substrates cover the widest range of lattice parameters.</p>
+
+      <h3>Method</h3>
+      <p>This is the coincidence-site-lattice / domain-matching-epitaxy construction of
+      Zur &amp; McGill, <em>J. Appl. Phys.</em> <strong>55</strong>, 378 (1984).</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="substrates-modal" hidden>
+  <div class="modal">
+    <header><h2>Select Substrates</h2><button class="modal-close">&times;</button></header>
+    <div class="modal-body">
+      <div class="modal-actions">
+        <button class="btn-sm" id="substrates-all">Select all</button>
+        <button class="btn-sm" id="substrates-none">Clear</button>
+        <input type="search" id="substrate-search" placeholder="Filter substrates…">
+      </div>
+      <div id="substrate-list" class="checkbox-grid"></div>
+    </div>
+    <footer><button class="btn" id="close-substrates">Update substrates</button></footer>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="films-modal" hidden>
+  <div class="modal">
+    <header><h2>Select Films</h2><button class="modal-close">&times;</button></header>
+    <div class="modal-body">
+      <p>Filter films by the parameters below, then click <em>Pull materials</em>. Films with more
+      than 3 elements or with lattice parameters exceeding 16&nbsp;Å are excluded to keep the
+      catalogue manageable. You may not select more than 1,000 film planes at a time.</p>
+      <p id="film-status" class="readout">No films selected</p>
+      <button class="btn" id="pull-materials">Pull materials</button>
+
+      <fieldset>
+        <legend>Filters</legend>
+        <div class="filter-grid">
+          <div><label>Must Include</label><input type="text" id="must-include" placeholder="e.g. Ga, N"></div>
+          <div><label>Can Include</label><input type="text" id="can-include" placeholder="e.g. Ga, N, O"></div>
+          <div><label>Exclude Elements</label><input type="text" id="exclude-elements" placeholder="e.g. Pb"></div>
+          <div><label>Number of Elements</label><input type="number" id="num-elements" min="1" max="3"></div>
+          <div><label>Crystal Systems</label><div id="crystal-systems" class="chip-row"></div></div>
+          <div><label>Point Groups</label><input type="text" id="point-groups" placeholder="e.g. 6mm, m-3m"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Lattice Planes</legend>
+        <div id="plane-filters"></div>
+      </fieldset>
+    </div>
+    <footer><button class="btn" id="close-films">Update films</button></footer>
+  </div>
+</div>
+
+<div id="loading">Loading substrate data…</div>
+
+<script src="vendor/plotly-gl2d-3.6.0.min.js"></script>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

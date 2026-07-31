@@ -1,6 +1,6 @@
 """Pack the generated tables into compact binary bundles for the web app.
 
-    python -m pipeline.encode --data src/assets/data --out web/public/data
+    python -m pipeline.encode --data src/assets/data --out web/data
 
 A bundle is a JSON manifest plus one flat ``.bin`` of concatenated typed
 arrays. The manifest records each column's dtype, byte offset and length, so
@@ -109,10 +109,16 @@ class BundleWriter:
 
 def encode_superlattices(df: pd.DataFrame) -> tuple[bytes, dict]:
     w = BundleWriter()
-    w.numeric("a", df["a"])
+    # float64, not float32. mismatch() is (film - sub) / sub, a difference of
+    # two nearby numbers, so float32's ~6e-8 relative error on `a` is amplified
+    # by ~5e4 in the result -- around 1e-4 relative on the mismatch itself.
+    # That is enough to reorder near-equal matches, which are exactly the ones
+    # this tool exists to rank. A differential test against the Python
+    # implementation caught two adjacent entries swapping places.
+    w.numeric("a", df["a"], "float64")
     if "b" in df.columns:
-        w.numeric("b", df["b"])
-    w.numeric("mcia", df["mcia"])
+        w.numeric("b", df["b"], "float64")
+    w.numeric("mcia", df["mcia"], "float64")
     # Colours as uint8 RGB; the CSV carries both float channels and a
     # pre-rendered "rgb(...)" string, which is the same information three times.
     # Spelled out rather than lowercased: "B".lower() collides with the "b"
@@ -127,9 +133,12 @@ def encode_superlattices(df: pd.DataFrame) -> tuple[bytes, dict]:
 
 def encode_films(df: pd.DataFrame) -> tuple[bytes, dict]:
     w = BundleWriter()
-    w.numeric("a", df["a"])
+    # float64 for the same reason as the superlattices: these feed the same
+    # cancellation-prone mismatch(). This table is lazy-loaded, so the extra
+    # bytes do not touch first paint.
+    w.numeric("a", df["a"], "float64")
     if "b" in df.columns:
-        w.numeric("b", df["b"])
+        w.numeric("b", df["b"], "float64")
     w.numeric("num_elements", df["num_elements"], "uint8")
     w.element_masks("element_mask", df["elements"])
     w.dictionary("formula", df["formula"])

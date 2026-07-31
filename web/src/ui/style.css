@@ -1,0 +1,156 @@
+/* Ported from the Dash app's assets/style.css, plus the layout the Bootstrap
+   grid used to provide. No framework: the page has four boxes. */
+
+:root {
+  --border: #eee;
+  --accent: darkorange;
+  --shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1);
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: white;
+  margin: 0;
+  font-family: var(--sans);
+  color: #111;
+}
+
+#main-container { margin: 30px auto; width: calc(100vw - 40px); }
+
+.grid { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; align-items: start; }
+.grid > .left { display: flex; flex-direction: column; gap: 16px; }
+.row { display: grid; grid-template-columns: 5fr 7fr; gap: 16px; align-items: start; }
+
+@media (max-width: 1100px) {
+  .grid, .row { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 5px;
+  padding: 1rem;
+}
+
+h1 { font-size: 30px; margin: 0 0 .3em; }
+h2 { font-size: 24px; margin: 0 0 .4em; }
+h3 { font-size: 18px; margin-top: 14px; margin-bottom: 6px; }
+h3 a { color: black; }
+p { margin: .4em 0; }
+
+.modal-link {
+  color: var(--accent) !important;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+
+.readout {
+  border: 1px solid black;
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  max-height: 6.5em;
+  overflow-y: auto;
+}
+
+/* Sliders */
+input[type="range"] { width: 100%; }
+.slider-marks {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: #555; margin-top: -2px;
+}
+
+/* Table */
+.table-wrap { max-height: 340px; overflow: auto; }
+#matches-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  font-size: 12px;
+}
+#matches-table th, #matches-table td {
+  text-align: center; padding: 4px 6px; border-bottom: 1px solid #eee;
+}
+#matches-table th { background: #fafafa; position: sticky; top: 0; }
+#matches-table tbody tr:hover { background: #fff6ec; }
+.table-foot {
+  display: flex; align-items: center; gap: 8px;
+  margin: 8px 0 4px; font-size: 12px;
+}
+#page-status { flex: 1; color: #555; }
+
+/* Controls */
+.field { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.field label { width: 4.5em; font-size: 13px; }
+.radio-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 6px 0; font-size: 13px; }
+input[type="number"], input[type="text"], input[type="search"] {
+  font-size: 13px; padding: 4px 6px; border: 1px solid #bbb; border-radius: 3px;
+}
+.btn, .btn-sm {
+  background: #0d6efd; color: white; border: none; border-radius: 4px;
+  cursor: pointer; font-family: inherit;
+}
+.btn { padding: 7px 14px; font-size: 14px; }
+.btn-sm { padding: 3px 9px; font-size: 12px; }
+.btn:hover, .btn-sm:hover { filter: brightness(1.1); }
+.btn-sm:disabled { background: #ccc; cursor: default; }
+.note { font-size: 14px; font-style: italic; margin-top: 10px; color: #555; }
+.graph { width: 100%; }
+
+/* Fieldsets, matching the original's inverted-pill legend */
+fieldset {
+  border: solid 2px black; padding: 5px 12px 10px;
+  margin: 20px 0; background: #fafafa;
+}
+legend {
+  float: none; width: inherit; padding: 5px 10px;
+  background: black; color: white; font-size: 20px; border-radius: 5px;
+}
+.filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.filter-grid label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.filter-grid input { width: 100%; }
+@media (max-width: 700px) { .filter-grid { grid-template-columns: 1fr; } }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+.chip-row label, .plane-row label { display: inline-flex; align-items: center; gap: 4px; }
+.plane-row { margin: 6px 0; font-size: 12px; display: flex; flex-wrap: wrap; gap: 10px; }
+.plane-row > strong { min-width: 7em; }
+
+.checkbox-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 4px 12px; max-height: 46vh; overflow-y: auto;
+  border: 1px solid #ddd; padding: 8px; font-size: 13px;
+}
+.checkbox-grid label { display: flex; align-items: center; gap: 6px; }
+
+/* Modals */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, .4);
+  display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+}
+.modal-backdrop[hidden] { display: none; }
+.modal {
+  background: white; border-radius: 6px; max-width: 860px; width: 100%;
+  max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,.3);
+}
+.modal > header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; border-bottom: 1px solid #eee;
+}
+.modal > header h2 { margin: 0; }
+.modal-close { background: none; border: none; font-size: 26px; cursor: pointer; line-height: 1; }
+.modal-body { padding: 16px 18px; overflow-y: auto; }
+.modal > footer { padding: 12px 18px; border-top: 1px solid #eee; text-align: right; }
+.modal-actions { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+.modal-actions input[type="search"] { flex: 1; }
+
+#loading {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: white; font-size: 18px; color: #555; z-index: 100;
+}
+#loading[hidden] { display: none; }
+#loading.error { color: #b00; }
