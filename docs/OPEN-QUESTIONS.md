@@ -7,33 +7,69 @@ published results and needs a deliberate call.
 
 ---
 
-## 1. The A- and R-plane formulas do not match the textbook derivation
+## 1. The A- and R-plane formulas are transposed
 
 **Status:** preserved as-is. Highest priority of the items here.
 
-`pipeline/geometry.py::new_hexagonal_plane` builds these nets:
+Both formulas in `new_hexagonal_plane` are individually correct. They are
+attached to the wrong plane labels.
 
-| Plane | Code produces | Standard derivation |
+Derived by enumerating the lattice points that lie in each plane through the
+origin and reducing to a shortest basis, for a **primitive hexagonal** lattice
+with a = 4.763, c = 13.003 (sapphire's hexagonal cell):
+
+| Plane | True net | Code produces | |
+|---|---|---|---|
+| M (10-10) | `a × c` = 4.763 × 13.003 | `Rectangle(a, c)` | correct |
+| A (11-20) | `√3·a × c` = **8.250 × 13.003** | `Rectangle(a, √(3a²+c²))` = 4.763 × 15.399 | **this is the R net** |
+| R (1-102) | `a × √(3a²+c²)` = **4.763 × 15.399** | `Rectangle(c, √3·a)` = 8.250 × 13.003 | **this is the A net** |
+
+All three nets come out at exactly 90°, confirming they are genuine rectangular
+meshes — so the enumeration's orthogonal-axes assumption is sound here.
+
+Swapping the two branches is a one-line fix. It is left undone only because it
+changes published results.
+
+This is **separate from** the `c`-was-never-passed bug already fixed (§1.1 of
+the overhaul plan). That bug made A/R/M collapse to c = a; fixing it makes them
+depend on `c` for the first time, but with the labels still transposed, A and R
+remain wrong — they are simply each other.
+
+### Caveat: sapphire is R-centred, so even the corrected formula may not apply
+
+The derivation above assumes a **primitive hexagonal** lattice — correct for
+wurtzites like GaN, ZnO and AlN (P6₃mc). Sapphire is R-3c, whose lattice is
+**rhombohedrally centred**, adding lattice points at (2/3,1/3,1/3) and
+(1/3,2/3,2/3). Repeating the enumeration with those included:
+
+| Plane | Primitive hexagonal | R-centred |
 |---|---|---|
-| M (10-10) | `Rectangle(a, c)` | `a × c` — agrees |
-| A (11-20) | `Rectangle(a, √(3a² + c²))` | `√3·a × c` |
-| R (1-102) | `Rectangle(c, √3·a)` | `√3·a × √(a² + c²)` |
+| C (0001) | 4.763 × 4.763, 120° | 4.763 × 4.763, 120° — same |
+| M (10-10) | 4.763 × 13.003, 90° | 4.763 × 13.003, 90° — same |
+| A (11-20) | 8.250 × 13.003, 90° | 5.133 × 7.003, **84.2°** — oblique |
+| R (1-102) | 4.763 × 15.399, 90° | 4.763 × **5.133**, 90° |
 
-For A-plane, the in-plane directions are [0001] (length `c`) and [1-100]
-(length `√3·a`), so the net should be `√3·a × c`. The quantity
-`√(3a² + c²)` is the **diagonal** of that rectangle, not an edge.
+C and M are unaffected. A and R are not: the centring triples the in-plane
+point density, and for A-plane the reduced cell is no longer rectangular.
 
-The R-plane formula `Rectangle(c, √3·a)` is what the A-plane net should be,
-which suggests the two may have been transposed at some point.
+Note 15.399 / 3 = 5.133 exactly. Much of the literature on r-plane sapphire
+quotes a 4.76 × 15.4 Å mesh, i.e. the primitive-hexagonal value, so there is a
+real question about **which mesh is the right one for epitaxy** — the primitive
+2D cell, or a larger conventional mesh that ignores the centring because the
+surface termination breaks it. I do not think that is mine to decide.
 
-This is **separate from** the `c`-was-never-passed bug that has already been
-fixed (§1.1 of the overhaul plan). Fixing that bug makes A/R/M depend on `c`
-for the first time, but if the formulas themselves are wrong then A and R are
-still wrong — differently. Because Sapphire A/R/M are heavily used substrates,
-this should be resolved before the regenerated data is published.
+**Needed, in order:**
 
-**Needed:** confirmation of the intended convention, then a test in
-`pipeline/tests/test_geometry.py` pinning the agreed values.
+1. Confirm the A/R transposition and swap the branches. This part is
+   unambiguous for primitive hexagonal lattices.
+2. Decide how R-centred substrates (sapphire, LiNbO₃, LiTaO₃ — all R-3c or
+   R3c) should be treated. If the centring must be respected, the net depends
+   on the space group, not just the crystal system, and `new_hexagonal_plane`
+   needs the centring passed in. A-plane sapphire would then be oblique and
+   fall outside what the superlattice enumeration can express at all (item 3).
+3. Pin whatever is agreed in `pipeline/tests/test_geometry.py`. The current
+   Sapphire A/R expectations there encode the **transposed** formulas with a
+   correct `c`, and will need updating.
 
 ---
 
