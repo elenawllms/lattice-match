@@ -1,14 +1,19 @@
 """Regression tests for the surface-net construction.
 
-The Sapphire cases pin the bug described in geometry.py: the notebook bound
-the parameter named ``c`` to ``a``, so every hexagonal non-basal plane was
-computed as though c == a.
+The Sapphire cases pin the two bugs described in geometry.py: the notebook
+bound the parameter named ``c`` to ``a``, so every hexagonal non-basal plane
+was computed as though c == a; and the A- and R-plane expressions were
+transposed onto each other's labels.
+
+Values assume a primitive hexagonal lattice. Sapphire is actually R-3c, whose
+centring changes A and R -- see docs/OPEN-QUESTIONS.md item 1.
 """
 
 from __future__ import annotations
 
 import math
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -24,25 +29,65 @@ SAPPHIRE_A = 4.763
 SAPPHIRE_C = 13.003
 
 
-@pytest.mark.parametrize(
-    "plane, expected_a, expected_b, shipped_b",
-    [
-        # plane      expected a       expected b                          what the old CSV shipped
-        ("M", SAPPHIRE_A, SAPPHIRE_C, 4.763),
-        ("A", SAPPHIRE_A, math.sqrt(3 * SAPPHIRE_A**2 + SAPPHIRE_C**2), 9.526),
-        ("R", math.sqrt(3) * SAPPHIRE_A, SAPPHIRE_C, 8.249757996450562),
-    ],
-)
-def test_sapphire_non_basal_planes_use_c(plane, expected_a, expected_b, shipped_b):
-    """A, R and M must depend on c. Previously all three collapsed to c == a."""
+# The surface net of each plane, for a primitive hexagonal lattice. Derived by
+# enumerating the lattice points lying in the plane through the origin and
+# reducing to a shortest basis; all three come out rectangular at exactly 90
+# degrees. See new_hexagonal_plane's docstring for the in-plane vectors.
+SAPPHIRE_NETS = {
+    "M": (SAPPHIRE_A, SAPPHIRE_C),                                        # a x c
+    "A": (math.sqrt(3) * SAPPHIRE_A, SAPPHIRE_C),                         # sqrt(3)a x c
+    "R": (SAPPHIRE_A, math.sqrt(3 * SAPPHIRE_A**2 + SAPPHIRE_C**2)),      # a x sqrt(3a^2+c^2)
+}
+
+# What the originally shipped CSV contained, when c was never passed and A/R
+# were transposed. Every one of these must now be wrong.
+SAPPHIRE_SHIPPED = {"M": (4.763, 4.763), "A": (4.763, 9.526), "R": (4.763, 8.249757996450562)}
+
+
+@pytest.mark.parametrize("plane", ["M", "A", "R"])
+def test_sapphire_non_basal_planes(plane):
+    """A, R and M must depend on c, and A/R must be on the correct labels."""
     net = new_hexagonal_plane(f"Sapphire ({plane})", SAPPHIRE_A, SAPPHIRE_C, plane)
     assert isinstance(net, Rectangle)
-    # Rectangle normalises so that a <= b.
-    lo, hi = sorted((expected_a, expected_b))
-    assert net.a == pytest.approx(lo)
-    assert net.b == pytest.approx(hi)
-    # And confirm we actually moved off the old, wrong value.
-    assert net.b != pytest.approx(shipped_b)
+    lo, hi = sorted(SAPPHIRE_NETS[plane])          # Rectangle normalises a <= b
+    assert (net.a, net.b) == pytest.approx((lo, hi))
+    assert (net.a, net.b) != pytest.approx(SAPPHIRE_SHIPPED[plane])
+
+
+def test_a_and_r_are_not_transposed():
+    """Regression guard for the specific bug: each formula was individually
+    correct but attached to the other plane's label."""
+    a, c = SAPPHIRE_A, SAPPHIRE_C
+    a_net = new_hexagonal_plane("x", a, c, "A")
+    r_net = new_hexagonal_plane("x", a, c, "R")
+
+    # A-plane is spanned by |a1 - a2| = sqrt(3)a and by c.
+    assert sorted((a_net.a, a_net.b)) == pytest.approx(sorted((math.sqrt(3) * a, c)))
+    # R-plane is spanned by |a1 + a2| = a and by |-a1 + a2 + c|.
+    assert sorted((r_net.a, r_net.b)) == pytest.approx(
+        sorted((a, math.sqrt(3 * a**2 + c**2)))
+    )
+    # They must not be each other.
+    assert (a_net.a, a_net.b) != pytest.approx((r_net.a, r_net.b))
+
+
+def test_hexagonal_nets_are_rectangular_for_a_primitive_lattice():
+    """The superlattice enumeration assumes orthogonal axes. Verify that
+    assumption directly, by checking each net against the in-plane vectors."""
+    a, c = 3.19, 5.19  # GaN, a genuine primitive hexagonal (P6_3mc) lattice
+    a1 = np.array([a, 0.0, 0.0])
+    a2 = np.array([-a / 2, a * math.sqrt(3) / 2, 0.0])
+    cv = np.array([0.0, 0.0, c])
+
+    for plane, (u, v) in {
+        "M": (a2, cv),               # normal a1
+        "A": (a1 - a2, cv),          # normal a1 + a2
+        "R": (a1 + a2, -a1 + a2 + cv),
+    }.items():
+        assert abs(float(u @ v)) < 1e-9, f"{plane}: in-plane vectors are not orthogonal"
+        net = new_hexagonal_plane("x", a, c, plane)
+        expected = sorted((float(np.linalg.norm(u)), float(np.linalg.norm(v))))
+        assert (net.a, net.b) == pytest.approx(expected), f"{plane} net mismatch"
 
 
 def test_sapphire_basal_plane_unchanged():

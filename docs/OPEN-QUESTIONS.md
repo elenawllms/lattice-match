@@ -7,33 +7,34 @@ published results and needs a deliberate call.
 
 ---
 
-## 1. The A- and R-plane formulas are transposed
+## 1. The A- and R-plane formulas were transposed
 
-**Status:** preserved as-is. Highest priority of the items here.
+**Status: RESOLVED for primitive hexagonal lattices.** The R-centring caveat
+below is still open.
 
-Both formulas in `new_hexagonal_plane` are individually correct. They are
-attached to the wrong plane labels.
+Both formulas in `new_hexagonal_plane` were individually correct but attached
+to the wrong plane labels. Derived by enumerating the lattice points that lie
+in each plane through the origin and reducing to a shortest basis, for a
+**primitive hexagonal** lattice with a = 4.763, c = 13.003 (sapphire's
+hexagonal cell):
 
-Derived by enumerating the lattice points that lie in each plane through the
-origin and reducing to a shortest basis, for a **primitive hexagonal** lattice
-with a = 4.763, c = 13.003 (sapphire's hexagonal cell):
-
-| Plane | True net | Code produces | |
+| Plane | In-plane vectors | True net | Old code |
 |---|---|---|---|
-| M (10-10) | `a × c` = 4.763 × 13.003 | `Rectangle(a, c)` | correct |
-| A (11-20) | `√3·a × c` = **8.250 × 13.003** | `Rectangle(a, √(3a²+c²))` = 4.763 × 15.399 | **this is the R net** |
-| R (1-102) | `a × √(3a²+c²)` = **4.763 × 15.399** | `Rectangle(c, √3·a)` = 8.250 × 13.003 | **this is the A net** |
+| M (10-10) | a₂, c | `a × c` = 4.763 × 13.003 | correct |
+| A (11-20) | a₁−a₂, c | `√3·a × c` = **8.250 × 13.003** | gave 4.763 × 15.399 — the R net |
+| R (1-102) | a₁+a₂, −a₁+a₂+c | `a × √(3a²+c²)` = **4.763 × 15.399** | gave 8.250 × 13.003 — the A net |
 
-All three nets come out at exactly 90°, confirming they are genuine rectangular
-meshes — so the enumeration's orthogonal-axes assumption is sound here.
+All three come out at exactly 90°, confirming they are genuine rectangular
+meshes, so the enumeration's orthogonal-axes assumption is sound here.
 
-Swapping the two branches is a one-line fix. It is left undone only because it
-changes published results.
+The branches are now swapped. Pinned by `test_a_and_r_are_not_transposed` and
+`test_hexagonal_nets_are_rectangular_for_a_primitive_lattice`, the latter
+checking each net against the in-plane vectors directly rather than against a
+hardcoded formula.
 
-This is **separate from** the `c`-was-never-passed bug already fixed (§1.1 of
-the overhaul plan). That bug made A/R/M collapse to c = a; fixing it makes them
-depend on `c` for the first time, but with the labels still transposed, A and R
-remain wrong — they are simply each other.
+This was **separate from** the `c`-was-never-passed bug (§1.1 of the overhaul
+plan). That bug made A/R/M collapse to c = a; fixing it alone would have left A
+and R still wrong — simply each other.
 
 ### Caveat: sapphire is R-centred, so even the corrected formula may not apply
 
