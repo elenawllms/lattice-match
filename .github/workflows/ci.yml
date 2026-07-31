@@ -1,0 +1,47 @@
+name: tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      # The differential test needs a JS runtime. Locally that is macOS's
+      # JavaScriptCore; on Linux runners it is Node. Without one the test
+      # skips itself, and the whole point of it is not to skip.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: pip install -r requirements.txt pytest matplotlib pyarrow
+
+      - name: Run the test suite
+        run: python -m pytest -q
+
+      - name: Fail if the differential test was skipped
+        run: |
+          python -m pytest pipeline/tests/test_web_differential.py -q -rs \
+            | tee /tmp/diff.txt
+          if grep -q "skipped" /tmp/diff.txt; then
+            echo "::error::the Python/JavaScript differential test did not run"
+            exit 1
+          fi
+
+      - name: Confirm the shipped bundles match the CSVs
+        run: |
+          python -m pipeline.encode --data src/assets/data --out /tmp/bundles
+          for f in superlattices_2d superlattices_1d films_2d films_1d; do
+            cmp "/tmp/bundles/$f.bin" "web/data/$f.bin" \
+              || { echo "::error::web/data/$f.bin is stale; re-run pipeline.encode"; exit 1; }
+          done

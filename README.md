@@ -60,23 +60,37 @@ pipeline/     Python. The science. Runs offline; nothing here serves requests.
   superlattices.py  coincidence-cell enumeration
   films.py          Materials Project fetch -> film catalogue
   build.py          CLI: regenerate the substrate tables
+  encode.py         CLI: pack the tables into binary bundles for the web app
   data/crystec.csv  substrate source of truth (hand-maintained)
   tests/
-src/          The Dash app (being replaced; see docs/REFACTOR-LOG.md)
+web/          The site. No build step; this directory IS what gets served.
+  index.html
+  src/core/         cost, ranking, film filtering, the WebGL Voronoi solve
+  src/data/         binary bundle decoder
+  src/ui/           Plotly figures, styles
+  data/             generated binary bundles
+  vendor/           Plotly.js gl2d, vendored so there is no CDN dependency
+src/          The old Dash app, kept as the reference implementation that the
+              differential test checks the browser code against.
 docs/         REFACTOR-LOG.md (running change record) + OPEN-QUESTIONS.md
 ```
 
 ## Running
 
+The site is static. Any file server will do:
+
 ```bash
-python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python src/app.py          # http://127.0.0.1:8050
+cd web && python3 -m http.server 8899     # http://127.0.0.1:8899
 ```
 
-Production:
+There is no build step and no `npm install`. Editing a file under `web/src/`
+and reloading is the whole development loop. `web/jsconfig.json` gives VS Code
+full type checking of the JSDoc annotations without a compiler.
+
+The old Dash app still runs, if you need to compare against it:
 
 ```bash
-gunicorn --chdir src app:server --bind 0.0.0.0:$PORT --workers 2
+.venv/bin/python src/app.py               # http://127.0.0.1:8050
 ```
 
 ## Regenerating the data
@@ -102,15 +116,36 @@ The key is needed only at build time and never ships. A key was previously
 hardcoded in `src/app.py` and remains recoverable from git history — treat it
 as compromised.
 
+## Deployment
+
+Pushing to `master` publishes `web/` to GitHub Pages via
+`.github/workflows/deploy.yml`. Nothing is built; the directory is uploaded
+as-is. The workflow refuses to deploy if the page gains a root-absolute path
+(which would break under the `/lattice-match/` base path) or a reference to an
+external CDN.
+
+Hosting cost is zero.
+
 ## Tests
 
 ```bash
-.venv/bin/python -m pytest pipeline/tests -q
+.venv/bin/python -m pytest -q
 ```
 
-`test_build.py` golden-diffs regenerated tables against the originally shipped
-CSVs and asserts that **only** the documented corrections changed anything.
-That is what makes it safe to replace production data.
+Three groups matter:
+
+- `test_build.py` golden-diffs regenerated tables against the originally
+  shipped CSVs, in `pipeline/tests/fixtures/`, and asserts that **only** the
+  documented corrections changed anything. That is what made it safe to
+  replace production data.
+- `test_encode.py` round-trips the binary bundles, checking byte alignment,
+  non-overlapping columns and the element-bitmask semantics -- all things that
+  fail silently rather than loudly in that format.
+- `test_web_differential.py` runs the browser's cost and ranking code against
+  the Python implementation over the real catalogue. The physics exists twice
+  now, and two implementations drifting apart is exactly how the old app ended
+  up with a table and a map that disagreed. It runs under macOS's built-in
+  JavaScriptCore locally and Node in CI, and CI fails if it skips.
 
 ## Documentation
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import base64
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -26,9 +27,18 @@ JSC = Path(
     "/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc"
 )
 
+
+def js_runtime() -> list[str] | None:
+    """Whichever JS runtime is available: JavaScriptCore locally, Node in CI."""
+    if JSC.exists():
+        return [str(JSC), "-m"]
+    node = shutil.which("node")
+    return [node] if node else None
+
+
 pytestmark = pytest.mark.skipif(
-    not JSC.exists() or not (WEB / "data" / "superlattices_2d.bin").exists(),
-    reason="needs JavaScriptCore and built web bundles",
+    js_runtime() is None or not (WEB / "data" / "superlattices_2d.bin").exists(),
+    reason="needs a JS runtime (JavaScriptCore or Node) and built web bundles",
 )
 
 sys.path.insert(0, str(REPO / "src"))
@@ -107,13 +117,18 @@ def test_browser_matches_python(tmp_path):
         base64.b64encode((WEB / "data" / "superlattices_2d.bin").read_bytes()).decode()
     )
 
+    runtime = js_runtime()
+    assert runtime is not None
+    script = [str(WEB / "test" / "differential.mjs")]
+    # jsc needs a bare `--` to separate script arguments; node does not.
+    separator = ["--"] if runtime[0] == str(JSC) else []
+    args = [
+        str(ref_path), str(b64),
+        str(WEB / "data" / "superlattices_2d.meta.json"),
+        str(WEB / "src" / "core"),
+    ]
     result = subprocess.run(
-        [
-            str(JSC), "-m", str(WEB / "test" / "differential.mjs"), "--",
-            str(ref_path), str(b64),
-            str(WEB / "data" / "superlattices_2d.meta.json"),
-            str(WEB / "src" / "core"),
-        ],
+        runtime + script + separator + args,
         capture_output=True, text=True, timeout=180,
     )
     assert result.returncode == 0, f"jsc failed:\n{result.stderr}"

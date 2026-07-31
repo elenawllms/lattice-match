@@ -1,0 +1,54 @@
+name: deploy to github pages
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+# Allow one deploy at a time; skip queued runs superseded by a newer push.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # There is no build step. `web/` is the site: plain ES modules, a
+      # vendored Plotly bundle, and the binary data. It is uploaded as-is.
+      - name: Check the site is self-contained
+        run: |
+          test -f web/index.html
+          test -f web/data/manifest.json
+          test -f web/vendor/plotly-gl2d-3.6.0.min.js
+          # Root-absolute paths would break under the /lattice-match/ base path
+          # that Project Pages serves from.
+          if grep -rnE '(src|href)="/[^/]' web/index.html; then
+            echo "::error::web/index.html has a root-absolute path"
+            exit 1
+          fi
+          # No external origins at runtime.
+          if grep -rnE 'https?://(cdn|unpkg|cdnjs)' web/index.html web/src; then
+            echo "::error::web/ references an external CDN"
+            exit 1
+          fi
+
+      # Tells Pages not to run Jekyll, which would ignore some files.
+      - run: touch web/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deployment
+        uses: actions/deploy-pages@v4
