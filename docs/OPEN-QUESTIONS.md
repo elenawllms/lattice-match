@@ -36,41 +36,70 @@ This was **separate from** the `c`-was-never-passed bug (§1.1 of the overhaul
 plan). That bug made A/R/M collapse to c = a; fixing it alone would have left A
 and R still wrong — simply each other.
 
-### Caveat: sapphire is R-centred, so even the corrected formula may not apply
+### The R-centred case, resolved
 
 The derivation above assumes a **primitive hexagonal** lattice — correct for
-wurtzites like GaN, ZnO and AlN (P6₃mc). Sapphire is R-3c, whose lattice is
-**rhombohedrally centred**, adding lattice points at (2/3,1/3,1/3) and
-(1/3,2/3,2/3). Repeating the enumeration with those included:
+wurtzites like GaN, ZnO and AlN (P6₃mc). Sapphire, LiNbO₃ and LiTaO₃ are
+R-3c/R3c, whose lattice is **rhombohedrally centred**, with extra points at
+(2/3,1/3,1/3) and (1/3,2/3,2/3).
 
-| Plane | Primitive hexagonal | R-centred |
+Recomputed with the centring included, in a single Cartesian frame, and checked
+against `area × d_spacing = V_primitive` — an identity any correct 2D mesh must
+satisfy. It holds exactly for every plane below.
+
+| Plane | Wurtzite (P6₃mc) | R-centred (R-3c / R3c) |
 |---|---|---|
-| C (0001) | 4.763 × 4.763, 120° | 4.763 × 4.763, 120° — same |
-| M (10-10) | 4.763 × 13.003, 90° | 4.763 × 13.003, 90° — same |
-| A (11-20) | 8.250 × 13.003, 90° | 5.133 × 7.003, **84.2°** — oblique |
-| R (1-102) | 4.763 × 15.399, 90° | 4.763 × **5.133**, 90° |
+| C (0001) | `a`, triangular | **same** |
+| M (10-10) | `a × c` | **same** |
+| A (11-20) | `√3·a × c` | **truly oblique**, 84–86° |
+| R (1-102) | `a × √(3a²+c²)` | **`a × √(3a²+c²) / 3`** |
 
-C and M are unaffected. A and R are not: the centring triples the in-plane
-point density, and for A-plane the reduced cell is no longer rectangular.
+Measured, for the three R-centred substrates:
 
-Note 15.399 / 3 = 5.133 exactly. Much of the literature on r-plane sapphire
-quotes a 4.76 × 15.4 Å mesh, i.e. the primitive-hexagonal value, so there is a
-real question about **which mesh is the right one for epitaxy** — the primitive
-2D cell, or a larger conventional mesh that ignores the centring because the
-surface termination breaks it. I do not think that is mine to decide.
+| | a | c | R-plane true | `a × √(3a²+c²)/3` | A-plane true |
+|---|---|---|---|---|---|
+| Al₂O₃ | 4.805 | 13.116 | 4.805 × 5.178, 90° | 4.805 × 5.178 ✓ | 5.178 × 7.064, 84.2° |
+| LiNbO₃ | 5.269 | 13.903 | 5.269 × 5.544, 90° | 5.269 × 5.544 ✓ | 5.544 × 7.649, 86.0° |
+| LiTaO₃ | 5.134 | 13.816 | 5.134 × 5.477, 90° | 5.134 × 5.477 ✓ | 5.477 × 7.507, 84.9° |
 
-**Needed, in order:**
+So, concretely:
 
-1. Confirm the A/R transposition and swap the branches. This part is
-   unambiguous for primitive hexagonal lattices.
-2. Decide how R-centred substrates (sapphire, LiNbO₃, LiTaO₃ — all R-3c or
-   R3c) should be treated. If the centring must be respected, the net depends
-   on the space group, not just the crystal system, and `new_hexagonal_plane`
-   needs the centring passed in. A-plane sapphire would then be oblique and
-   fall outside what the superlattice enumeration can express at all (item 3).
-3. Pin whatever is agreed in `pipeline/tests/test_geometry.py`. The current
-   Sapphire A/R expectations there encode the **transposed** formulas with a
-   correct `c`, and will need updating.
+**R-plane** — the current formula overstates the long axis by exactly 3×. The
+true mesh is rectangular, so this is fixable exactly: divide by 3 when the
+lattice is R-centred.
+
+**A-plane** — the true mesh is oblique and therefore cannot be represented at
+all by the superlattice enumeration, which assumes orthogonal axes. The
+smallest *rectangular* sublattice is `√3·a × c`, exactly 3× the primitive area
+— which is what the code already produces. That is a legitimate, if
+conservative, choice: a valid sublattice, just not the primitive one.
+
+### Why the 3× matters
+
+Both A and R currently use a cell 3× larger in area than the true surface mesh.
+Two consequences, neither fatal:
+
+1. **MCIA is overstated 3×**, so those faces are over-penalised in ranking. At
+   the default slider (`q = 0.5`) the penalty goes as `MCIA^0.5`, so they are
+   ranked ~1.7× worse than they deserve.
+2. **Coverage is lost.** `get_superlattices` caps enumeration at
+   `MCIA_MAX = 200 Å²`. For sapphire R-plane the true mesh is 24.9 Å², allowing
+   stackings up to the `MAX_AXIS_RATIO = 5` limit; the 3× cell is 74.6 Å²,
+   allowing only 2. Valid matches are never enumerated.
+
+The geometry itself is still *found* — `get_sublattices` divides by integer
+denominators up to 5, so the `(a × b/3)` entry does appear with the right
+dimensions. It just carries the wrong MCIA.
+
+**To implement the R-plane fix,** `new_hexagonal_plane` needs to know the
+centring, which is not derivable from the current `Structure` column
+(`crystec.csv` lists sapphire as "hexagonal" and LiNbO₃ as "trigonal"; both are
+R-centred, while ZnO is "hexagonal" and primitive). It needs either a
+`centring` column in `crystec.csv`, or the space-group symbol. For films it is
+already available — Materials Project's symbol starts with "R".
+
+Affected substrate faces: Sapphire (A), Sapphire (R), LiNbO₃ (1120),
+LiNbO₃ (1-102) if added, LiTaO₃ likewise. ZnO is primitive and unaffected.
 
 ---
 
