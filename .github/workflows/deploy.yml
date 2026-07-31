@@ -2,7 +2,7 @@ name: deploy to github pages
 
 on:
   push:
-    branches: [master, main]
+    branches: [main]
   workflow_dispatch:
 
 # Allow one deploy at a time; skip queued runs superseded by a newer push.
