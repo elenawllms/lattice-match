@@ -134,3 +134,49 @@ def test_color_column_format_is_preserved(regenerated):
     assert sub_2d["color_column"].iloc[0].startswith("rgb(")
     channels = sub_2d[["R", "G", "B"]]
     assert channels.ge(0).all().all() and channels.le(1).all().all()
+
+
+# --- film catalogue --------------------------------------------------------
+
+
+def test_film_nets_use_the_corrected_hexagonal_geometry():
+    """The shipped catalogue listed GaN (0001) at 5.192 A, which is GaN's c."""
+    from pipeline.films import build_film_nets
+
+    materials = pd.DataFrame([
+        dict(formula="GaN", elements="Ga, N", num_elements=2,
+             crystal_system="Hexagonal", point_group="6mm",
+             a=3.189, b=3.189, c=5.192, alpha=90.0, beta=90.0, gamma=120.0),
+    ])
+    _films_2d, films_1d, _skipped = build_film_nets(materials)
+    assert films_1d["a"].iloc[0] == pytest.approx(3.189)
+
+    shipped = pd.read_csv(SHIPPED / "stable_films_1d.csv")
+    assert shipped[shipped.formula == "GaN"]["a"].iloc[0] == pytest.approx(5.192, abs=1e-3)
+
+
+def test_film_validation_catches_the_c_for_a_regression():
+    """validate_known_films must fail loudly if c is ever used as a again."""
+    from pipeline.films import validate_known_films
+
+    bad = pd.DataFrame([dict(formula="GaN", a=5.192)])
+    problems = validate_known_films(bad, pd.DataFrame())
+    assert any("GaN" in p and "c is being used" in p for p in problems)
+
+    good = pd.DataFrame([
+        dict(formula="GaN", a=3.19), dict(formula="ZnO", a=3.25), dict(formula="AlN", a=3.11),
+    ])
+    assert validate_known_films(good, pd.DataFrame()) == []
+
+
+def test_monoclinic_materials_off_standard_setting_are_skipped():
+    """new_monoclinic_plane assumes alpha = gamma = 90; anything else is oblique."""
+    from pipeline.films import build_film_nets
+
+    materials = pd.DataFrame([
+        dict(formula="Bad", elements="X", num_elements=1, crystal_system="Monoclinic",
+             point_group="2/m", a=5.0, b=9.0, c=7.0, alpha=97.0, beta=90.0, gamma=90.0),
+    ])
+    films_2d, _films_1d, skipped = build_film_nets(materials)
+    assert films_2d.empty
+    assert "standard setting" in skipped[0]["reason"]

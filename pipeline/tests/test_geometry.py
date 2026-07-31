@@ -112,3 +112,30 @@ def test_cubic_111_uses_root_two_convention():
 def test_rectangle_orders_axes():
     assert Rectangle("x", 9.0, 4.0).a == pytest.approx(4.0)
     assert Rectangle("x", 9.0, 4.0).b == pytest.approx(9.0)
+
+
+# --- monoclinic ------------------------------------------------------------
+# Standard setting: alpha = gamma = 90, beta != 90, unique axis b. Verified
+# against Materials Project conventional cells, where beta is the off-90 angle.
+
+
+def test_monoclinic_001_is_the_a_by_b_rectangle():
+    """(001) is spanned by a and b, and gamma = 90, so it is orthogonal."""
+    net = new_plane("X (001)", "monoclinic", 5.0, 9.0, 7.0, "001")
+    assert isinstance(net, Rectangle)
+    assert (net.a, net.b) == pytest.approx((5.0, 9.0))
+
+
+def test_monoclinic_100_is_the_b_by_c_rectangle():
+    """(100) is spanned by b and c, and alpha = 90, so it is orthogonal."""
+    net = new_plane("X (100)", "monoclinic", 5.0, 9.0, 7.0, "100")
+    assert isinstance(net, Rectangle)
+    assert (net.a, net.b) == pytest.approx((7.0, 9.0))
+
+
+@pytest.mark.parametrize("plane", ["010", "110", "1-10", "011"])
+def test_monoclinic_oblique_planes_are_rejected(plane):
+    """(010) and the {110} faces are oblique; the enumeration assumes
+    orthogonal axes, so they must be refused rather than approximated."""
+    with pytest.raises(UnsupportedPlane, match="oblique"):
+        new_plane(f"X ({plane})", "monoclinic", 5.0, 9.0, 7.0, plane)

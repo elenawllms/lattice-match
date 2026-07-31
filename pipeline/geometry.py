@@ -78,6 +78,37 @@ def new_tetragonal_plane(name: str, a: float, c: float, plane: str) -> SurfaceNe
     raise UnsupportedPlane(f"tetragonal plane {plane!r} is not supported")
 
 
+def new_monoclinic_plane(name: str, a: float, b: float, c: float, plane: str) -> SurfaceNet:
+    """Surface net for a monoclinic plane in the standard setting.
+
+    Standard setting has alpha = gamma = 90 and beta != 90, with b the unique
+    axis. Verified empirically against Materials Project conventional cells,
+    where beta is the off-90 angle in ~93% of monoclinic entries and the
+    remainder are within rounding of 90.
+
+    Only the two faces whose in-plane vectors are mutually orthogonal can be
+    represented:
+
+      (001)  spanned by a and b, with gamma = 90  ->  Rectangle(a, b)
+      (100)  spanned by b and c, with alpha = 90  ->  Rectangle(b, c)
+
+    (010) is spanned by a and c at angle beta, and the {110} faces mix the
+    a-b plane with c, which is inclined to a. Both are oblique nets, which the
+    superlattice enumeration cannot express -- it assumes orthogonal axes.
+
+    Callers must confirm alpha and gamma really are 90 for the specific
+    material; see pipeline.films.
+    """
+    if plane == "001":
+        return Rectangle(name, a, b)
+    if plane == "100":
+        return Rectangle(name, b, c)
+    raise UnsupportedPlane(
+        f"monoclinic plane {plane!r} is an oblique net (only 001 and 100 are "
+        f"orthogonal in the standard setting)"
+    )
+
+
 def new_hexagonal_plane(name: str, a: float, c: float, plane: str) -> SurfaceNet:
     """Surface net for a hexagonal or trigonal (hexagonal-setting) plane.
 
@@ -116,6 +147,8 @@ def new_plane(
         return new_orthorhombic_plane(name, a, b, c, plane)
     if structure == "tetragonal":
         return new_tetragonal_plane(name, a, c, plane)
+    if structure == "monoclinic":
+        return new_monoclinic_plane(name, a, b, c, plane)
     # Trigonal substrates here (LiNbO3, LiTaO3) are R3c in the hexagonal
     # setting, so their basal/prismatic faces use the hexagonal construction.
     if structure in ("hexagonal", "trigonal"):

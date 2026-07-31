@@ -39,13 +39,15 @@ PLANES_BY_SYSTEM: dict[str, tuple[str, ...]] = {
     "Orthorhombic": ("001", "010", "100", "011", "101", "110"),
     "Hexagonal": ("0001", "1-100", "1-102", "11-20"),
     "Trigonal": ("0001", "1-100", "11-20"),
-    # Monoclinic films appear in the shipped CSVs and in the UI filter, but the
-    # generator that produced them was never committed and pipeline.geometry
-    # has no monoclinic branch. Deriving one is a scientific decision, not a
-    # port -- see docs/OPEN-QUESTIONS.md. Left empty so the build reports the
-    # gap loudly instead of silently emitting wrong nets.
-    "Monoclinic": (),
+    # Only the two monoclinic faces whose in-plane vectors are orthogonal in
+    # the standard setting. (010) and the {110} faces are oblique nets; the
+    # app offers (1-10)/(110) checkboxes that will simply match nothing.
+    # See new_monoclinic_plane and docs/OPEN-QUESTIONS.md item 6.
+    "Monoclinic": ("001", "100"),
 }
+
+#: Tolerance, in degrees, for treating a lattice angle as a right angle.
+RIGHT_ANGLE_TOL = 0.5
 
 #: Films larger than this along any axis are excluded, matching the note in the
 #: app's film modal ("lattice parameters exceeding 16A are excluded").
@@ -64,12 +66,27 @@ OUTPUT_COLUMNS_1D = [
 ]
 
 
-def fetch_stable_materials(api_key: str, max_elements: int = MAX_ELEMENTS) -> pd.DataFrame:
-    """Pull thermodynamically stable materials and their conventional cells.
+def fetch_stable_materials(
+    api_key: str,
+    max_elements: int = MAX_ELEMENTS,
+    cache: Path | None = None,
+) -> pd.DataFrame:
+    """Pull thermodynamically stable materials and their CONVENTIONAL cells.
 
     Requires the ``mp-api`` package.
+
+    The ``structure`` field of a summary document is the PRIMITIVE cell. Using
+    it directly would be wrong: primitive fcc silicon has a = 3.849 A, while
+    the value this tool needs -- and the one the original catalogue used -- is
+    the conventional 5.444 A. Every cubic entry would have been off by a factor
+    of sqrt(2). Each structure is therefore reduced to its conventional
+    standard form, which costs ~7 ms per material.
     """
+    if cache is not None and cache.exists():
+        return pd.read_parquet(cache)
+
     from mp_api.client import MPRester  # imported lazily; build-time only
+    from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
     with MPRester(api_key) as mpr:
         docs = mpr.materials.summary.search(
@@ -83,7 +100,14 @@ def fetch_stable_materials(api_key: str, max_elements: int = MAX_ELEMENTS) -> pd
 
     rows = []
     for doc in docs:
-        lattice = doc.structure.lattice
+        try:
+            lattice = (
+                SpacegroupAnalyzer(doc.structure)
+                .get_conventional_standard_structure()
+                .lattice
+            )
+        except Exception:  # noqa: BLE001 - symmetry analysis can fail on odd cells
+            continue
         rows.append(
             {
                 "material_id": str(doc.material_id),
@@ -95,9 +119,17 @@ def fetch_stable_materials(api_key: str, max_elements: int = MAX_ELEMENTS) -> pd
                 "a": lattice.a,
                 "b": lattice.b,
                 "c": lattice.c,
+                "alpha": lattice.alpha,
+                "beta": lattice.beta,
+                "gamma": lattice.gamma,
             }
         )
-    return pd.DataFrame(rows)
+
+    df = pd.DataFrame(rows)
+    if cache is not None:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(cache)
+    return df
 
 
 def build_film_nets(materials: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[dict]]:
@@ -105,6 +137,8 @@ def build_film_nets(materials: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame
     rows_2d: list[dict] = []
     rows_1d: list[dict] = []
     skipped: list[dict] = []
+
+    has_angles = {"alpha", "beta", "gamma"}.issubset(materials.columns)
 
     for _, m in materials.iterrows():
         planes = PLANES_BY_SYSTEM.get(m["crystal_system"])
@@ -114,6 +148,21 @@ def build_film_nets(materials: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame
                  "reason": "no planes defined for this crystal system"}
             )
             continue
+
+        # new_monoclinic_plane assumes the standard setting, alpha = gamma = 90.
+        # A handful of Materials Project conventional cells do not satisfy that;
+        # their (001)/(100) faces would be oblique, so skip rather than guess.
+        if m["crystal_system"] == "Monoclinic" and has_angles:
+            if (
+                abs(m["alpha"] - 90.0) > RIGHT_ANGLE_TOL
+                or abs(m["gamma"] - 90.0) > RIGHT_ANGLE_TOL
+            ):
+                skipped.append(
+                    {"formula": m["formula"], "system": "Monoclinic",
+                     "reason": f"not in standard setting "
+                               f"(alpha={m['alpha']:.2f}, gamma={m['gamma']:.2f})"}
+                )
+                continue
 
         for plane in planes:
             name = f"{m['formula']} ({plane})"
@@ -193,6 +242,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--max-elements", type=int, default=MAX_ELEMENTS)
+    parser.add_argument(
+        "--cache",
+        type=Path,
+        default=None,
+        help="parquet file to cache the Materials Project fetch in, so that "
+             "re-runs do not re-download ~24k materials",
+    )
     args = parser.parse_args(argv)
 
     api_key = os.environ.get("MP_API_KEY")
@@ -203,7 +259,7 @@ def main(argv: list[str] | None = None) -> int:
             "and must be treated as compromised."
         )
 
-    materials = fetch_stable_materials(api_key, args.max_elements)
+    materials = fetch_stable_materials(api_key, args.max_elements, cache=args.cache)
     films_2d, films_1d, skipped = build_film_nets(materials)
     problems = validate_known_films(films_1d, films_2d)
 

@@ -127,20 +127,33 @@ This is assumed in the rewrite unless the lab says otherwise.
 
 ---
 
-## 6. Monoclinic films have no plane construction
+## 6. Monoclinic films support only 2 of the 4 offered planes
 
-**Status:** `PLANES_BY_SYSTEM["Monoclinic"]` is empty in `pipeline/films.py`.
+**Status:** partially resolved. (001) and (100) are implemented; (1-10) and
+(110) are refused.
 
-The shipped `stable_films_*.csv` contain monoclinic films, and the app offers a
-monoclinic plane filter with (001), (100), (1-10), (110). But the generator
-that produced them was never committed, and `pipeline/geometry.py` has no
-monoclinic branch.
+Materials Project conventional cells for monoclinic materials are in the
+standard setting — α = γ = 90°, β the unique angle — confirmed on a 400-material
+sample (372 have β off-90; the rest are within rounding of 90°). That makes two
+faces rigorously derivable:
 
-A monoclinic cell has β ≠ 90°, so most of its low-index faces are oblique —
-the same problem as item 3.
+| Plane | Spanned by | Angle | Net |
+|---|---|---|---|
+| (001) | a, b | γ = 90° | `Rectangle(a, b)` |
+| (100) | b, c | α = 90° | `Rectangle(b, c)` |
+| (010) | a, c | β ≠ 90° | **oblique** |
+| (110), (1-10) | a±b, c | c inclined to a | **oblique** |
 
-**Needed:** the original derivation, or a decision to drop monoclinic films.
-Until then the film build reports them as skipped rather than guessing.
+`pipeline/films.py` additionally verifies α and γ per material and skips the
+few that are not in the standard setting (22 of 3,256 in the real run).
+
+The app still offers (1-10) and (110) checkboxes in the monoclinic filter.
+They now match nothing. Monoclinic film rows dropped from 9,544 to 5,427 as a
+result.
+
+**Needed:** either remove those two checkboxes from the UI, or add an oblique
+net type — which is a real extension, since the superlattice enumeration
+assumes orthogonal axes (same blocker as item 3).
 
 ---
 
@@ -156,3 +169,31 @@ is telling substrates apart by colour.
 **Suggested:** a categorical palette that varies lightness and saturation as
 well as hue, ideally grouping faces of the same substrate into one hue family
 with different lightness. Purely cosmetic — no effect on rankings.
+
+---
+
+## 8. Triangular films now appear in the 2D table as well as the 1D table
+
+**Status:** changed behaviour. Introduced by the regenerated film catalogue.
+
+A triangular net can match a rectangular substrate through its centred
+rectangular cell a × √3·a. `pipeline/nets.py::Triangle.coords_2d` already does
+this for *substrates*, and `pipeline/films.py` now does it for *films* too.
+
+The original catalogue was inconsistent about this:
+
+| | old 2D | old 1D | new 2D | new 1D |
+|---|---|---|---|---|
+| cubic (111) | **0** | 4,785 | 2,066 | 4,753 |
+| hexagonal (0001) | 2,393 | 2,820 | 4,181 | 4,961 |
+
+Hexagonal basal films appeared in the 2D table but cubic (111) films did not,
+with no apparent reason. The new pipeline treats both the same way.
+
+Consequence: triangular films now show as black dots in *both* the
+"Square/Rectangular" and "Triangular" plots. That is physically reasonable —
+you can grow a triangular film on a rectangular substrate — but it is a visible
+change, and worth confirming it is what you want.
+
+**Needed:** confirm that triangular films belong in both plots. If not, drop
+the `rows_2d.append` for `Triangle` in `pipeline/films.py::build_film_nets`.
