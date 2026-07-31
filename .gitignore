@@ -9,3 +9,5 @@ env/
 
 # Materials Project fetch cache
 *.parquet
+node_modules/
+web/dist/
