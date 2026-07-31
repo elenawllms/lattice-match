@@ -1,0 +1,22 @@
+[project]
+name = "lattice-match"
+version = "0.2.0"
+description = "Lattice matching to commercially available substrates (Falson Lab, Caltech)"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+# Build-time only. None of this is needed to serve the app.
+pipeline = ["pandas>=2.0", "numpy>=1.24", "matplotlib>=3.8"]
+films = ["mp-api>=0.41"]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["pipeline/tests"]
+filterwarnings = ["error::FutureWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
