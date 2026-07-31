@@ -260,27 +260,146 @@ support; tracked as open question 1.
 
 ---
 
+## Shipping the corrections
+
+*Commit `758938a`. First regeneration of `src/assets/data` from `pipeline/`.*
+
+Substrates, 7,201 → 7,343 rows:
+
+| | before | after |
+|---|---|---|
+| Sapphire (M) | 4.763 × 4.763 | 4.763 × 13.003 |
+| Sapphire (A) | 4.763 × 9.526 | 8.250 × 13.003 |
+| Sapphire (R) | 4.763 × 8.250 | 4.763 × 5.133 |
+| LiNbO₃, LiTaO₃ | absent | 6 faces |
+
+Films, 73,421 → 74,459 rows. GaN 5.192 → 3.189, ZnO 5.222 → 3.237,
+AlN 5.017 → 3.129. Trigonal films 0 → 3,497.
+
+Open question 5 resolved: `mismatch()` is called substrate-first everywhere.
+
+Two testing hazards this created, both closed. The golden diff compared against
+`src/assets/data`, which this commit overwrote — left alone it would have
+compared the pipeline against itself and passed vacuously forever, so the
+pre-correction tables became gzipped fixtures. And `fetch_stable_materials`
+would have reused a cache written before the `centring` column existed,
+silently treating every R-centred film as primitive; it now validates the
+cached schema.
+
+---
+
+## Stage 2 — Binary bundle format
+
+*Commit `d0d1642`.*
+
+A JSON manifest plus a flat `.bin` of concatenated typed arrays, decoded as
+zero-copy views. Per-table sidecar metadata, so films stay unfetched until the
+film panel opens.
+
+| | CSV | bin | gzipped |
+|---|---|---|---|
+| superlattices_2d | 0.95 MB | 0.23 MB | **28.9 KB** |
+| films_2d | 6.49 MB | 2.83 MB | 945 KB (lazy) |
+
+Initial data load: **34 KB gzipped**, against 5.89 MB of dropdown options alone
+before.
+
+Element membership is a 128-bit mask, so the film filters are four bitwise ops
+per row instead of six row-wise Python string scans over 81,000 rows.
+
+The round-trip tests caught a bug before it shipped: colour channels were named
+by lowercasing R/G/B, so `"B"` collided with the `b` lattice parameter and
+overwrote its manifest entry. The browser would have decoded colour bytes as
+lattice constants. `BundleWriter` now rejects duplicate column names.
+
+---
+
+## Stage 3 — The browser app
+
+*Commit `5f467f2`.* Plain ES modules with JSDoc types — no build step, no
+`node_modules`. Plotly.js gl2d vendored (517 KB gzipped) rather than hotlinked.
+
+The Voronoi is now a single WebGL draw call at 512×512, with the catalogue
+uploaded as a float texture and the shader looping over it. **The
+1,000-superlattice cap does not exist in this implementation.** Rasters reach
+Plotly as a `layout.images` entry backed by an offscreen canvas, which is why
+the gl2d partial bundle suffices — no image or heatmap trace module is needed.
+
+New: CSV export of the ranked table, and a film filter that works (it was never
+wired as a callback input in the Dash app).
+
+### Two bugs the differential test caught
+
+**float32 was not adequate.** `mismatch()` is `(film − sub) / sub`, a difference
+of two nearby numbers, so float32's ~6×10⁻⁸ relative error on `a` is amplified
+about 47,000× — roughly 10⁻⁴ on the mismatch itself. Small mismatches, which
+are exactly the good matches this tool ranks, lose the most. Two adjacent
+entries had already swapped rank. Now float64; the eager payload went 24 → 34 KB
+gzipped.
+
+Worth noting the earlier test asserting "float32 is adequate" checked the wrong
+quantity: it verified `a` round-trips, not the derived mismatch.
+
+**The ranking was not reproducible.** Binary insertion placed equal-cost entries
+*before* existing ones, breaking ties opposite to Python's stable sort. Ties are
+ordinary here — InSb and CdTe are both cubic at 6.48 Å, so their (110) faces are
+numerically identical.
+
+`pipeline/tests/test_web_differential.py` now pins the two implementations,
+running 132 assertions through macOS's built-in JavaScriptCore (no Node needed)
+and asserting the assertion count so the harness cannot silently check nothing.
+
+---
+
+## Stage 4 — GitHub Pages
+
+*Commit `8002f38`.* `deploy.yml` uploads `web/` on push to master; nothing is
+built. It refuses to deploy on a root-absolute path (which would break under
+the `/lattice-match/` base path) or an external CDN reference.
+
+`ci.yml` installs Node so the differential test runs on Linux and **fails if it
+skips**, and byte-compares freshly encoded bundles against the committed ones so
+`web/data` cannot drift from `src/assets/data`.
+
+Hosting: **$25/mo → $0**.
+
+---
+
 ## Status
 
 | Stage | State |
 |---|---|
-| 0 — emergency patch | done, verified, **not deployed** |
-| 1 — pipeline package | done, 61 tests passing |
-| — film catalogue | regenerated and validated, **not shipped** |
-| 2 — binary data format | not started |
-| 3 — static TypeScript app | not started |
-| 4 — deploy, retire Render | not started |
+| 0 — emergency patch to the Dash app | done; superseded by the rewrite |
+| 1 — pipeline package | done |
+| — corrections shipped to production data | done |
+| 2 — binary bundle format | done |
+| 3 — browser app | done, renders |
+| 4 — GitHub Pages + CI | done, **awaiting first push** |
 
-### Production data has deliberately not been regenerated
+77 tests passing. Nothing has been pushed yet; `origin/master` is still at
+`68361ec`.
 
-`src/assets/data/*.csv` is still the original. The corrections are ready to
-apply, but shipping them changes published scientific results, so it should be
-a deliberate act:
+### To go live
 
 ```bash
-python -m pipeline.build --out src/assets/data
-MP_API_KEY=... python -m pipeline.films --out src/assets/data --cache .mp_cache.parquet
+git checkout master && git merge stage0-emergency-perf-fix && git push origin master
 ```
+
+Then in the repo settings, set **Pages → Source → GitHub Actions**. The site
+lands at `https://elenawllms.github.io/lattice-match/`.
+
+### Where things stand overall
+
+| | before | after |
+|---|---|---|
+| initial page payload | 5.89 MB of dropdown options alone | 34 KB of data + 517 KB vendored Plotly |
+| per-interaction traffic | ~8 MB of JSON | zero — nothing leaves the browser |
+| Voronoi solve | 1.8 s, capped at 1,000 superlattices | one GPU draw call, no cap |
+| hosting | $25/mo | $0 |
+| Sapphire A/M/R | wrong | correct (A still a 3× rectangular approximation) |
+| hexagonal films | using `c` instead of `a` | correct |
+| trigonal substrates and films | absent | present |
+| tests | none | 77 |
 
 ### Outstanding decisions
 
