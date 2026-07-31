@@ -1,6 +1,9 @@
-dash>=2.0.0
-numpy
-plotly
-dash-bootstrap-components
-pandas
-gunicorn
+dash==2.18.2
+dash-bootstrap-components==1.6.0
+plotly==5.24.1
+pandas==2.2.3
+numpy==2.2.1
+gunicorn==23.0.0
+# Dash enables gzip on callback responses only when this is installed.
+# Without it, every store and figure payload was sent uncompressed.
+Flask-Compress==1.15

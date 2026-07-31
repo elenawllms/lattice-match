@@ -4,13 +4,15 @@
 # Elena Williams / elwilliams@hmc.edu / sewillia@caltech.edu
 
 # IMPORTS ----
-from dash import Dash, html, dcc, callback, Output, Input, dash_table, State, ctx
+from pathlib import Path
+
+from dash import Dash, html, dcc, callback, Output, Input, dash_table, State
 import pandas as pd
 import numpy as np
 from plotly import graph_objects as go
 import dash_bootstrap_components as dbc
 
-deploying = True
+DATA_DIR = Path(__file__).resolve().parent / "assets" / "data"
 
 # GLOBAL VARIABLES ----
 ELEMENTS = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
@@ -22,35 +24,36 @@ POINT_GROUPS = ['6/mmm', 'm-3m', '-42m', '6/m', '4/mmm', '6mm', '-43m', '2/m',
 
 # MOVE THESE TO A SEPARATE FILE
 
+# Resolution of the (a, b) grid used for the Voronoi / mismatch-heatmap solve.
+# The figure trace coordinates must be built with this same value.
+RESOLUTION = 100
+
+# Rows returned to the matches DataTable. It paginates 10 at a time, so shipping
+# the full sorted catalogue (up to 7,201 rows) to the browser is pure waste.
+MAX_TABLE_ROWS = 200
+
+# Above this many superlattices the Voronoi solve is skipped.
+MAX_VORONOI_SUPERLATTICES = 1000
+
 def mismatch(sub, film):
     return (film - sub) / sub
 
-def costToColor(cost):
-    return None
-    
 def costFunction2d(a_mismatch, b_mismatch, mcia, single_double=0.5, large_superlattice=0.5):
     return (np.abs(a_mismatch)**single_double + np.abs(b_mismatch)**single_double)**(1/single_double) * (mcia**(1-large_superlattice))
 
 def costFunction1d(a_mismatch, mcia, large_superlattice=0.5):
     return np.abs(a_mismatch) * (mcia**(1-large_superlattice))
 
-def addRenderPrefix(PATH, deploying):
-    if deploying:
-        return "/opt/render/project/src/" + PATH
-    else: return PATH
-
 # SUBSTRATE / FILM DATA ----
-sublattices_2d = pd.read_csv(addRenderPrefix("src/assets/data/sublattices_2d.csv", deploying))
-sublattices_1d = pd.read_csv(addRenderPrefix("src/assets/data/sublattices_1d.csv", deploying))
+sublattices_2d = pd.read_csv(DATA_DIR / "sublattices_2d.csv")
+sublattices_1d = pd.read_csv(DATA_DIR / "sublattices_1d.csv")
 
 substrates = pd.concat([sublattices_2d["substrate"], sublattices_1d["substrate"]]).unique()
 
-#/opt/render/project/src/src
-films_2d = pd.read_csv(addRenderPrefix("src/assets/data/stable_films_2d.csv", deploying))
-films_1d = pd.read_csv(addRenderPrefix("src/assets/data/stable_films_1d.csv", deploying))
-films = pd.concat([films_2d["name"] + " " +  films_2d["crystal_system"], films_1d["name"] + " " +  films_1d["crystal_system"]]).unique()
+films_2d = pd.read_csv(DATA_DIR / "stable_films_2d.csv")
+films_1d = pd.read_csv(DATA_DIR / "stable_films_1d.csv")
 
-    
+
 # BASIC METHODS ----
 
 def toggle_modal(open_clicks, close_clicks, is_open):
@@ -108,6 +111,7 @@ def update_readout(data):
 
 @callback(
     Output("database-pull-status", "children"),
+    Output("film-select", "options"),
     Output("film-select", "value"),
     Output("selected-films-2d", "data"),
     Output("selected-films-1d", "data"),
@@ -126,20 +130,28 @@ def update_readout(data):
     State("hexagonal-faces", "value"),
 )
 def pull_materials(n_clicks, must_include, can_include, exclude, num_elements, crystal_systems, point_groups, current_films, cubic_faces, tetragonal_faces, orthorhombic_faces, monoclinic_faces, hexagonal_faces):
-    if n_clicks == 0: return "No films selected", [], [], []
-    
-    num_elem_condition_2d = num_elements is None or films_2d["num_elements"] == int(num_elements)
-    num_elem_condition_1d = num_elements is None or films_1d["num_elements"] == int(num_elements)
-    crystal_sys_condition_2d = crystal_systems is None or films_2d["crystal_system"].isin(crystal_systems)
-    crystal_sys_condition_1d = crystal_systems is None or films_1d["crystal_system"].isin(crystal_systems)
-    point_group_condition_2d = point_groups is None or films_2d["point_group"].isin(point_groups)
-    point_group_condition_1d = point_groups is None or films_1d["point_group"].isin(point_groups)
-    must_include_condition_2d = must_include is None or films_2d["elements"].apply(lambda x: all([e in x for e in must_include]))
-    must_include_condition_1d = must_include is None or films_1d["elements"].apply(lambda x: all([e in x for e in must_include]))
-    can_include_condition_2d = can_include is None or films_2d["elements"].apply(lambda x: all([e in can_include for e in x.split(", ")]))
-    can_include_condition_1d = can_include is None or films_1d["elements"].apply(lambda x: all([e in can_include for e in x.split(", ")]))
-    exclude_condition_2d = exclude is None or films_2d["elements"].apply(lambda x: not any([e in x for e in exclude]))
-    exclude_condition_1d = exclude is None or films_1d["elements"].apply(lambda x: not any([e in x for e in exclude]))
+    if n_clicks == 0: return "No films selected", [], [], [], []
+
+    try:
+        num_elements = None if num_elements in (None, "") else int(num_elements)
+    except (TypeError, ValueError):
+        return "Number of elements must be a whole number", [], [], [], []
+
+    num_elem_condition_2d = num_elements is None or films_2d["num_elements"] == num_elements
+    num_elem_condition_1d = num_elements is None or films_1d["num_elements"] == num_elements
+    # NOTE: these guards test falsiness, not `is None`. Clearing a multi-select
+    # dropdown yields [], not None, and `all(e in [] for e in ...)` is False for
+    # every row -- which silently made every search return nothing.
+    crystal_sys_condition_2d = not crystal_systems or films_2d["crystal_system"].isin(crystal_systems)
+    crystal_sys_condition_1d = not crystal_systems or films_1d["crystal_system"].isin(crystal_systems)
+    point_group_condition_2d = not point_groups or films_2d["point_group"].isin(point_groups)
+    point_group_condition_1d = not point_groups or films_1d["point_group"].isin(point_groups)
+    must_include_condition_2d = not must_include or films_2d["elements"].apply(lambda x: all([e in x for e in must_include]))
+    must_include_condition_1d = not must_include or films_1d["elements"].apply(lambda x: all([e in x for e in must_include]))
+    can_include_condition_2d = not can_include or films_2d["elements"].apply(lambda x: all([e in can_include for e in x.split(", ")]))
+    can_include_condition_1d = not can_include or films_1d["elements"].apply(lambda x: all([e in can_include for e in x.split(", ")]))
+    exclude_condition_2d = not exclude or films_2d["elements"].apply(lambda x: not any([e in x for e in exclude]))
+    exclude_condition_1d = not exclude or films_1d["elements"].apply(lambda x: not any([e in x for e in exclude]))
     
     cubic_condition_2d = (films_2d["plane"].isin(cubic_faces)) | ((films_2d["crystal_system"] != "Cubic"))
     tetragonal_condition_2d = (films_2d["plane"].isin(tetragonal_faces)) | ((films_2d["crystal_system"] != "Tetragonal"))
@@ -160,13 +172,13 @@ def pull_materials(n_clicks, must_include, can_include, exclude, num_elements, c
     dff_1d = films_1d[num_elem_condition_1d & crystal_sys_condition_1d & point_group_condition_1d & must_include_condition_1d & can_include_condition_1d & exclude_condition_1d & cubic_condition_1d & tetragonal_condition_1d & orthorhombic_condition_1d & monoclinic_condition_1d & hexagonal_condition_1d]
     new_films = pd.concat([dff_2d["name"] + " " +  dff_2d["crystal_system"], dff_1d["name"] + " " +  dff_1d["crystal_system"]]).unique()
     
-    # print("len(new_films):", len(new_films))
     if len(new_films) == 0:
-        return "Search returned no films", [], [], []
+        return "Search returned no films", [], [], [], []
     elif len(new_films) > 1000:
-        return "Too many films selected", [], [], []
+        return "Too many films selected", [], [], [], []
     else:
-        return f"{len(new_films)} films selected", new_films, dff_2d.to_dict("records"), dff_1d.to_dict("records")
+        options = list(new_films)
+        return f"{len(new_films)} films selected", options, options, dff_2d.to_dict("records"), dff_1d.to_dict("records")
 
 films_modal = dbc.Modal([
     dbc.ModalHeader(dbc.ModalTitle("Select Films")),
@@ -174,7 +186,11 @@ films_modal = dbc.Modal([
         html.Div(
             [
                 html.P("Filter films by the parameters below; then click 'Pull materials'. The dropdown menu allows further modification. Films with more than 3 elements or with lattice parameters exceeding 16Å are excluded by default to increase performance. You may not select more than 1,000 film planes at a time. Allow a few seconds for this page to load."),
-                dcc.Dropdown(films, multi=True, placeholder="Select films...", id="film-select"),
+                # Options are populated by `pull_materials`. They were previously
+                # seeded with all 78,417 film names -- 5.89 MB of JSON embedded in
+                # the initial page payload, mounted into React-Select before the
+                # user clicked anything.
+                dcc.Dropdown(options=[], multi=True, placeholder="Select films...", id="film-select"),
                 html.P("No films selected", id="database-pull-status"),
                 dbc.Button("Pull materials", id="pull-materials", className="btn btn-primary", n_clicks=0, style={"margin-bottom": "0.5em"}),
             ], id="pull-info"
@@ -377,7 +393,11 @@ display = dbc.Stack([
     Input("2d-superlattices", "data"),
 )
 def update_display_warning(data):
-    if data is None or len(data) < 1000:
+    # Must use the same threshold and comparison as the guard in
+    # update_best_2d_matches. These were previously two separate literals with
+    # opposite comparisons, so at exactly 1000 the warning showed while the
+    # solve still ran.
+    if not data or len(data) <= MAX_VORONOI_SUPERLATTICES:
         return {"display": "none"}
     return {}
 
@@ -405,7 +425,10 @@ def getLayout():
     id='main-container')
 
 # SERVE APP ----
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# compress=True needs Flask-Compress installed (see requirements.txt). Dash
+# defaults it to False, so callback payloads were being sent uncompressed --
+# the figure traces in particular are highly compressible JSON.
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], compress=True)
 server = app.server
 app.title = "Lattice Matcher | Falson Lab"
 app.layout = getLayout()
@@ -515,7 +538,9 @@ def update_table(data2d, data1d, dimension, a, b, single_double, large_superlatt
             } for row in data
         ]
         rows.sort(key=lambda x: costFunction1d(x["a_mismatch"], x["mcia"], large_superlattice))
-    return rows
+    # The table paginates 10 rows at a time; returning all ~7,201 shipped ~1.8 MB
+    # of JSON to render 10 of them.
+    return rows[:MAX_TABLE_ROWS]
 
 
 # Hide b-mismatch column if triangle selected
@@ -542,51 +567,65 @@ def update_table_columns(dimension):
 
 @app.callback(
     Output("best-2d-matches", "data"),
-    # Output("2d-window", "data"),
     Input("2d-superlattices", "data"),
     Input("single-double-slider", "value"),
     Input("large-superlattice-slider", "value"),
-    # Input("2d-figure", "relayoutData"),
-    # State("2d-window", "data")
+    Input("display-mode", "value"),
 )
-def update_best_2d_matches(superlattices, single_double, large_superlattice):
-    # if relayoutData:
-    #     limits = [relayoutData.get("xaxis.range[0]", pastLimits["xaxis.range[0]"]), 
-    #             relayoutData.get("xaxis.range[1]", pastLimits["xaxis.range[1]"]),
-    #             relayoutData.get("yaxis.range[0]", pastLimits["yaxis.range[0]"]), 
-    #             relayoutData.get("yaxis.range[1]", pastLimits["yaxis.range[1]"])]
-    # else:
-    #     limits = [4, 10, 4, 10]
-    # newLimits = {"xaxis.range[0]": limits[0], "xaxis.range[1]": limits[1], "yaxis.range[0]": limits[2], "yaxis.range[1]": limits[3]}
-    
-    if len(superlattices) > 1000: return []
-    
-    RESOLUTION = 100
+def update_best_2d_matches(superlattices, single_double, large_superlattice, display_mode):
+    # This is by far the most expensive callback in the app, and its result is
+    # only ever read by the Voronoi and Heatmap branches of update_2d_figure.
+    # Without this guard it ran on every substrate change and every slider
+    # release while the user sat on the default "Scatter" view, and the result
+    # was discarded.
+    if display_mode not in ("Voronoi", "Mismatch Heatmap"): return []
+    if not superlattices: return []
+    if len(superlattices) > MAX_VORONOI_SUPERLATTICES: return []
+
     limits = [3, 15, 3, 15]
-    
+
     X, Y = np.meshgrid(np.linspace(limits[0], limits[1], RESOLUTION), np.linspace(limits[2], limits[3], RESOLUTION))
     sp = pd.DataFrame(superlattices)
-    
-    def getOptArgs(a, b):
-        cost = costFunction2d(
-            mismatch(a, sp["a"]),
-            mismatch(b, sp["b"]),
-            sp["mcia"],
-            single_double,
-            large_superlattice)
-        argmin = np.argmin(cost, axis=0)
-        minCost = np.min(costFunction2d(
-            mismatch(a, sp.a[argmin]),
-            mismatch(b, sp.b[argmin]),
-            sp.mcia[argmin],
-            single_double,
-            large_superlattice), axis=0
-        )
-        return sp.R[argmin], sp.G[argmin], sp.B[argmin], minCost
 
-    getOptArgsVec = np.vectorize(getOptArgs)        
-    R, G, B, minCost = getOptArgsVec(X, Y)
-    
+    # Broadcast the grid against the whole catalogue instead of looping.
+    # This previously used np.vectorize -- a Python for-loop over all 10,000
+    # grid points, each running ~8 pandas Series ops and computing the cost
+    # function twice per point.
+    #
+    # Done in row chunks: a full (RESOLUTION, RESOLUTION, N) float64 array is
+    # ~80 MB at N=1000, and costFunction2d allocates several temporaries of
+    # that size. Chunking bounds peak memory to a few MB, which matters on a
+    # 512 MB instance.
+    sub_a = sp["a"].to_numpy()[None, None, :]
+    sub_b = sp["b"].to_numpy()[None, None, :]
+    sub_mcia = sp["mcia"].to_numpy()[None, None, :]
+
+    argmin = np.empty((RESOLUTION, RESOLUTION), dtype=np.intp)
+    minCost = np.empty((RESOLUTION, RESOLUTION), dtype=float)
+
+    CHUNK = 10
+    for lo in range(0, RESOLUTION, CHUNK):
+        hi = min(lo + CHUNK, RESOLUTION)
+        # Argument order preserved from the original (grid value passed as
+        # `sub`). This disagrees with update_table, which passes the substrate
+        # as `sub`; reconciling the two is a Stage 1 change, made under test.
+        cost = costFunction2d(
+            mismatch(X[lo:hi, :, None], sub_a),
+            mismatch(Y[lo:hi, :, None], sub_b),
+            sub_mcia,
+            single_double,
+            large_superlattice,
+        )
+        idx = np.argmin(cost, axis=2)
+        argmin[lo:hi] = idx
+        minCost[lo:hi] = np.take_along_axis(cost, idx[:, :, None], axis=2).squeeze(2)
+
+    # Positional lookup. The original indexed pandas Series with a positional
+    # argmin, which only worked because the frame happened to have a RangeIndex.
+    R = sp["R"].to_numpy()[argmin]
+    G = sp["G"].to_numpy()[argmin]
+    B = sp["B"].to_numpy()[argmin]
+
     # Calculate x0, y0 and dx, dy
     dx = (limits[1] - limits[0]) / RESOLUTION
     dy = (limits[3] - limits[2]) / RESOLUTION
@@ -645,7 +684,7 @@ def update_2d_figure(superlattices, films, large_superlattice, best2d, display_m
     sp = pd.DataFrame(superlattices)
     sp_labels = sp["substrate"] + " " + sp["dimensions"] + "<br>MCIA: " + sp["mcia"].astype(int).astype(str) + " sq. Å"
     
-    fig.add_trace(go.Scatter(
+    fig.add_trace(go.Scattergl(
         x=sp.a,
         y=sp.b,
         mode='markers',
@@ -663,7 +702,7 @@ def update_2d_figure(superlattices, films, large_superlattice, best2d, display_m
     flm = pd.DataFrame(films)
     if films:
         flm_labels = flm["formula"] + " " + flm["plane"] + " " + flm["crystal_system"]
-        fig.add_trace(go.Scatter(
+        fig.add_trace(go.Scattergl(
             x = flm["a"],
             y = flm["b"],
             mode='markers',
@@ -696,8 +735,11 @@ def update_2d_figure(superlattices, films, large_superlattice, best2d, display_m
     elif display_mode == "Mismatch Heatmap":
         fig.add_trace(go.Heatmap(
             z=best2d["minCost"],
-            x=np.linspace(best2d["x0"], best2d["x1"], 150),
-            y=np.linspace(best2d["y0"], best2d["y1"], 150),
+            # These must match the z grid. They were hardcoded to 150 while
+            # RESOLUTION was 100, so the heatmap was drawn against the wrong
+            # coordinates and misregistered with the scatter beneath it.
+            x=np.linspace(best2d["x0"], best2d["x1"], RESOLUTION),
+            y=np.linspace(best2d["y0"], best2d["y1"], RESOLUTION),
             colorscale="Temps",
             colorbar=dict(title="Cost"),
             hoverinfo="skip",
@@ -781,7 +823,7 @@ def update_1d_figure(substrates, films, large_superlattice, display_mode):
     sp = pd.DataFrame(substrates)
     flm = pd.DataFrame(films)
         
-    fig.add_trace(go.Scatter(
+    fig.add_trace(go.Scattergl(
         x=sp["a"],
         y=np.zeros(len(sp)),
         mode='markers',
@@ -796,7 +838,7 @@ def update_1d_figure(substrates, films, large_superlattice, display_mode):
     ))
     
     if not films: return fig
-    fig.add_trace(go.Scatter(
+    fig.add_trace(go.Scattergl(
         x = flm["a"],
         y = np.zeros(len(flm)),
         mode='markers',
@@ -808,12 +850,13 @@ def update_1d_figure(substrates, films, large_superlattice, display_mode):
     ))
     return fig
 
-if deploying:
-    app.run_server(
-        host="0.0.0.0", port=10000    
-    )
-else:
-    app.run_server(debug=True)
+
+# Only runs for local development. Under gunicorn this module is imported to
+# resolve `app:server`, and without the __main__ guard that import called
+# run_server(), which blocks forever in the Werkzeug development server -- so
+# the worker never reached gunicorn's accept loop.
+if __name__ == "__main__":
+    app.run(debug=True)
 
 
 
