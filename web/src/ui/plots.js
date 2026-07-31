@@ -53,17 +53,33 @@ const CONFIG = {
  * @param {boolean} webgl false falls back to SVG, which is slow past a few
  *   thousand points but is the only option without WebGL
  */
-function substrateTrace(table, rows, largeSuperlattice, sizeByMcia, webgl) {
+/**
+ * Positions, colours and hover strings for a substrate selection.
+ *
+ * These depend only on *which* rows are drawn, so they are built once per
+ * selection and reused. Only marker size depends on the sliders. Rebuilding all
+ * of it on every slider event meant ~7,300 dictionary lookups and string
+ * concatenations per frame, which is what made dragging feel heavy.
+ *
+ * @type {WeakMap<object, Map<string, any>>}
+ */
+const staticTraceCache = new WeakMap();
+
+function staticTraceData(table, rows, cacheKey) {
+  let perTable = staticTraceCache.get(table);
+  if (!perTable) staticTraceCache.set(table, (perTable = new Map()));
+  const hit = perTable.get(cacheKey);
+  if (hit) return hit;
+
   const a = table.col('a');
-  const b = table.col('b');
+  const b = table.columns.b;
   const mcia = table.col('mcia');
   const red = table.col('red');
   const green = table.col('green');
   const blue = table.col('blue');
 
-  const x = new Float64Array(rows.length);
-  const y = new Float64Array(rows.length);
-  const size = new Float64Array(rows.length);
+  const x = new Array(rows.length);
+  const y = new Array(rows.length);
   const color = new Array(rows.length);
   const text = new Array(rows.length);
 
@@ -71,21 +87,39 @@ function substrateTrace(table, rows, largeSuperlattice, sizeByMcia, webgl) {
     const i = rows[k];
     x[k] = a[i];
     y[k] = b ? b[i] : 0;
-    size[k] = sizeByMcia ? 10 * Math.pow(100 / mcia[i], 1 - largeSuperlattice) : 7;
     color[k] = `rgb(${red[i]},${green[i]},${blue[i]})`;
     text[k] = `${table.label('substrate', i)} ${table.label('dimensions', i)}` +
               `<br>MCIA: ${Math.round(mcia[i])} sq. Å` +
               `<br>angle: ${table.label('angle', i)}`;
   }
 
+  const built = { x, y, color, text, mcia };
+  // One entry per table: selections change, and holding every past selection
+  // would leak. The WeakMap keys on the table so unloaded data can be freed.
+  perTable.clear();
+  perTable.set(cacheKey, built);
+  return built;
+}
+
+function substrateTrace(table, rows, largeSuperlattice, sizeByMcia, webgl, cacheKey) {
+  const { x, y, color, text, mcia } = staticTraceData(table, rows, cacheKey);
+
+  const size = new Array(rows.length);
+  if (sizeByMcia) {
+    const exponent = 1 - largeSuperlattice;
+    for (let k = 0; k < rows.length; k++) size[k] = 10 * Math.pow(100 / mcia[rows[k]], exponent);
+  } else {
+    size.fill(7);
+  }
+
   return {
     type: webgl ? 'scattergl' : 'scatter',
     mode: 'markers',
-    x: Array.from(x),
-    y: Array.from(y),
+    x,
+    y,
     // A 1px surface ring separates overlapping marks without the heavy black
     // outline the original drew on all 7,343 of them.
-    marker: { color, size: Array.from(size), symbol: 'square',
+    marker: { color, size, symbol: 'square',
               line: { width: 1, color: 'rgba(252,252,251,0.9)' } },
     text,
     hovertemplate: '%{text}<br>a: %{x:.4f} Å<br>b: %{y:.4f} Å<extra></extra>',
@@ -130,7 +164,8 @@ function filmTrace(films, rows, twoD, webgl) {
 export function render2d(el, opts) {
   const { superlattices, rows, films, filmRows, largeSuperlattice, mode, raster } = opts;
   const webgl = opts.webgl !== false;
-  const traces = [substrateTrace(superlattices, rows, largeSuperlattice, mode === 'Scatter', webgl)];
+  const traces = [substrateTrace(superlattices, rows, largeSuperlattice,
+                                 mode === 'Scatter', webgl, opts.cacheKey)];
   if (films && filmRows.length) traces.push(filmTrace(films, filmRows, true, webgl));
 
   /** @type {any} */
@@ -172,7 +207,8 @@ export function render2d(el, opts) {
 export function render1d(el, opts) {
   const { superlattices, rows, films, filmRows, largeSuperlattice, mode } = opts;
   const webgl = opts.webgl !== false;
-  const traces = [substrateTrace(superlattices, rows, largeSuperlattice, mode === 'Scatter', webgl)];
+  const traces = [substrateTrace(superlattices, rows, largeSuperlattice,
+                                 mode === 'Scatter', webgl, opts.cacheKey)];
   if (films && filmRows.length) traces.push(filmTrace(films, filmRows, false, webgl));
 
   const layout = {

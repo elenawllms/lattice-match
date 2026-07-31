@@ -34,6 +34,11 @@
 
 * { box-sizing: border-box; }
 
+/* [hidden] is a UA rule with almost no specificity, so any `display` set by a
+   class beats it. `.field` and `.checkbox-grid label` are both flex, which
+   silently broke the substrate search filter and the b-input toggle. */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {

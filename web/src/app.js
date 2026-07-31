@@ -50,6 +50,8 @@ const state = {
 /** Row indices of the currently selected substrates, per table. */
 const visible = { '2d': /** @type {number[]} */ ([]), '1d': /** @type {number[]} */ ([]) };
 let rasterDirty = true;
+/** Bumped whenever the visible row set changes; keys the plot trace cache. */
+let selectionToken = 0;
 
 async function main() {
   try {
@@ -112,6 +114,7 @@ function recomputeVisible() {
     visible[dim] = rows;
   }
   rasterDirty = true;
+  selectionToken++;
 }
 
 /* --------------------------------------------------------------- compute */
@@ -187,8 +190,30 @@ function maskOf(table, rows) {
 
 /* ----------------------------------------------------------------- render */
 
-/** @param {{substrates?: boolean}} [opts] */
+/**
+ * Coalesce refreshes to one per animation frame.
+ *
+ * The sliders fire on `input`, so dragging one emits an event per pixel of
+ * travel. Without this each of those redrew both plots synchronously and the
+ * drag felt heavy; now intermediate events collapse into the next frame.
+ *
+ * @param {{substrates?: boolean}} [opts]
+ */
+let pendingFrame = 0;
+let pendingSubstrates = false;
 function refresh(opts = {}) {
+  pendingSubstrates = pendingSubstrates || Boolean(opts.substrates);
+  if (pendingFrame) return;
+  pendingFrame = requestAnimationFrame(() => {
+    pendingFrame = 0;
+    const substrates = pendingSubstrates;
+    pendingSubstrates = false;
+    doRefresh({ substrates });
+  });
+}
+
+/** @param {{substrates?: boolean}} [opts] */
+function doRefresh(opts = {}) {
   if (opts.substrates) recomputeVisible();
   recomputeMatches();
   renderTable();
@@ -204,6 +229,7 @@ function refresh(opts = {}) {
     mode: state.mode,
     raster,
     webgl: webglAvailable(),
+    cacheKey: `2d:${selectionToken}`,
   }).then(attachClick2d);
 
   render1d($('figure-1d'), {
@@ -214,6 +240,7 @@ function refresh(opts = {}) {
     largeSuperlattice: state.largeSuperlattice,
     mode: state.mode,
     webgl: webglAvailable(),
+    cacheKey: `1d:${selectionToken}`,
   }).then(attachClick1d);
 }
 
@@ -428,9 +455,22 @@ function syncSubstrateBoxes() {
 
 async function ensureFilms() {
   if (data.tables.films_2d) return;
+  // ~730 KB gzipped, deliberately not fetched until now. Disable the action
+  // and say so, rather than letting the button look unresponsive.
+  const button = /** @type {HTMLButtonElement} */ ($('pull-materials'));
+  const wasDisabled = button.disabled;
+  button.disabled = true;
   $('film-status').textContent = 'Loading film catalogue…';
-  await Promise.all([data.load('films_2d'), data.load('films_1d')]);
-  $('film-status').textContent = 'Film catalogue ready. Set filters, then pull materials.';
+  try {
+    await Promise.all([data.load('films_2d'), data.load('films_1d')]);
+    $('film-status').textContent = 'Film catalogue ready. Set filters, then pull materials.';
+  } catch (err) {
+    $('film-status').textContent =
+      `Could not load the film catalogue: ${/** @type {Error} */ (err).message}`;
+    throw err;
+  } finally {
+    button.disabled = wasDisabled;
+  }
 }
 
 function buildFilmFilters() {
