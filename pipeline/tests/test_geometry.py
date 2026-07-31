@@ -5,8 +5,10 @@ bound the parameter named ``c`` to ``a``, so every hexagonal non-basal plane
 was computed as though c == a; and the A- and R-plane expressions were
 transposed onto each other's labels.
 
-Values assume a primitive hexagonal lattice. Sapphire is actually R-3c, whose
-centring changes A and R -- see docs/OPEN-QUESTIONS.md item 1.
+Note the ``SAPPHIRE_*`` fixtures below exercise the PRIMITIVE-lattice formulas
+(``centring="P"``), using sapphire's cell constants only as convenient numbers.
+Sapphire itself is R-3c; its real, R-centred meshes are covered separately by
+the rhombohedral-centring tests at the end of this file.
 """
 
 from __future__ import annotations
@@ -184,3 +186,65 @@ def test_monoclinic_oblique_planes_are_rejected(plane):
     orthogonal axes, so they must be refused rather than approximated."""
     with pytest.raises(UnsupportedPlane, match="oblique"):
         new_plane(f"X ({plane})", "monoclinic", 5.0, 9.0, 7.0, plane)
+
+
+# --- rhombohedral centring -------------------------------------------------
+# R-3c / R3c lattices (sapphire, LiNbO3, LiTaO3) carry extra lattice points at
+# (2/3,1/3,1/3) and (1/3,2/3,2/3), tripling the in-plane density. Values below
+# were measured by enumerating the centred lattice and cross-checked against
+# area x d_spacing = V_primitive.
+
+R_CENTRED_MEASURED = {
+    #  name        a       c        true R-plane mesh
+    "Al2O3":  (4.805, 13.116, (4.805, 5.178)),
+    "LiNbO3": (5.269, 13.903, (5.269, 5.544)),
+    "LiTaO3": (5.134, 13.816, (5.134, 5.477)),
+}
+
+
+@pytest.mark.parametrize("material", sorted(R_CENTRED_MEASURED))
+def test_r_plane_is_divided_by_three_when_r_centred(material):
+    a, c, expected = R_CENTRED_MEASURED[material]
+    net = new_hexagonal_plane(material, a, c, "R", centring="R")
+    assert (net.a, net.b) == pytest.approx(sorted(expected), rel=1e-3)
+
+    # And it is exactly one third of the primitive-hexagonal answer.
+    primitive = new_hexagonal_plane(material, a, c, "R", centring="P")
+    assert primitive.b / net.b == pytest.approx(3.0)
+
+
+@pytest.mark.parametrize("plane", ["C", "M"])
+def test_c_and_m_are_unaffected_by_centring(plane):
+    """The centring translations do not lie in these planes."""
+    a, c = 4.805, 13.116
+    p = new_hexagonal_plane("x", a, c, plane, centring="P")
+    r = new_hexagonal_plane("x", a, c, plane, centring="R")
+    assert type(p) is type(r)
+    assert p.a == pytest.approx(r.a)
+    if isinstance(p, Rectangle):
+        assert p.b == pytest.approx(r.b)
+
+
+def test_a_plane_keeps_the_rectangular_sublattice_when_r_centred():
+    """The true R-centred A-plane mesh is oblique and cannot be represented,
+    so sqrt(3)a x c is kept: the smallest rectangular sublattice, 3x the
+    primitive area. Documented, not silently approximated."""
+    a, c = 4.805, 13.116
+    net = new_hexagonal_plane("Al2O3", a, c, "A", centring="R")
+    assert (net.a, net.b) == pytest.approx(sorted((math.sqrt(3) * a, c)))
+    # Its area really is 3x the measured primitive cell (5.178 x 7.064 at 84.2 deg).
+    primitive_area = 5.178 * 7.064 * math.sin(math.radians(84.2))
+    assert net.a * net.b / primitive_area == pytest.approx(3.0, rel=1e-3)
+
+
+def test_wurtzites_are_unaffected_by_the_centring_parameter():
+    """GaN/ZnO/AlN are P6_3mc; nothing about them should change."""
+    for a, c in [(3.189, 5.192), (3.25, 5.21)]:
+        for plane in ["C", "M", "A", "R"]:
+            p = new_hexagonal_plane("x", a, c, plane, centring="P")
+            assert p.a == pytest.approx(new_hexagonal_plane("x", a, c, plane).a)
+
+
+def test_invalid_centring_is_rejected():
+    with pytest.raises(ValueError, match="centring"):
+        new_hexagonal_plane("x", 4.8, 13.1, "R", centring="F")

@@ -62,8 +62,8 @@ pipeline/     Python. The science. Runs offline; nothing here serves requests.
   build.py          CLI: regenerate the substrate tables
   data/crystec.csv  substrate source of truth (hand-maintained)
   tests/
-src/          The Dash app (being replaced; see docs/OPEN-QUESTIONS.md)
-docs/         Open scientific questions requiring lab decisions
+src/          The Dash app (being replaced; see docs/REFACTOR-LOG.md)
+docs/         REFACTOR-LOG.md (running change record) + OPEN-QUESTIONS.md
 ```
 
 ## Running
@@ -112,9 +112,11 @@ as compromised.
 CSVs and asserts that **only** the documented corrections changed anything.
 That is what makes it safe to replace production data.
 
-## Known issues
+## Documentation
 
-`docs/OPEN-QUESTIONS.md` lists seven items found while porting the original
-notebook that need a scientific decision rather than a code change — most
-importantly the A- and R-plane formulas, which do not match the textbook
-derivation.
+- `docs/REFACTOR-LOG.md` — running record of the 2026 overhaul: what changed,
+  why, and what it measured. Start here.
+- `docs/OPEN-QUESTIONS.md` — items needing a scientific decision rather than a
+  code change, most importantly the A-plane of rhombohedrally centred
+  substrates, whose true surface mesh is oblique and cannot currently be
+  represented.

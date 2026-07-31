@@ -98,7 +98,7 @@ def fetch_stable_materials(
             ],
         )
 
-    rows = []
+    rows: list[dict] = []
     for doc in docs:
         try:
             lattice = (
@@ -116,6 +116,10 @@ def fetch_stable_materials(
                 "num_elements": doc.nelements,
                 "crystal_system": str(doc.symmetry.crystal_system).capitalize(),
                 "point_group": doc.symmetry.point_group,
+                # Bravais centring, needed for the hexagonal A/R meshes. The
+                # Hermann-Mauguin symbol's first letter is the lattice type,
+                # so R-3c and R3c give "R" and P6_3mc gives "P".
+                "centring": "R" if str(doc.symmetry.symbol).startswith("R") else "P",
                 "a": lattice.a,
                 "b": lattice.b,
                 "c": lattice.c,
@@ -168,7 +172,8 @@ def build_film_nets(materials: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame
             name = f"{m['formula']} ({plane})"
             try:
                 net = new_plane(
-                    name, m["crystal_system"], m["a"], m["b"], m["c"], plane
+                    name, m["crystal_system"], m["a"], m["b"], m["c"], plane,
+                    m.get("centring", "P"),
                 )
             except UnsupportedPlane as exc:
                 skipped.append({"formula": m["formula"], "plane": plane, "reason": str(exc)})

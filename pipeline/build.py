@@ -59,11 +59,17 @@ def build_nets(crystec: pd.DataFrame, report: BuildReport) -> list[SurfaceNet]:
 
     nets: list[SurfaceNet] = []
     for _, row in crystec.iterrows():
+        # Bravais centring changes the hexagonal A- and R-plane meshes and is
+        # not inferable from the Structure column. Defaults to primitive.
+        centring = str(row.get("centring", "P") or "P")
         for plane in str(row["Plane"]).split(", "):
             name = f"{row['Name']} ({plane})"
             try:
                 nets.append(
-                    new_plane(name, row["Structure"], row["a"], row["b"], row["c"], plane)
+                    new_plane(
+                        name, row["Structure"], row["a"], row["b"], row["c"],
+                        plane, centring,
+                    )
                 )
             except UnsupportedPlane as exc:
                 # Recorded, never silent. A (111) face of a tetragonal or

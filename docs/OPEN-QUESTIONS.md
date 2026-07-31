@@ -91,15 +91,23 @@ The geometry itself is still *found* — `get_sublattices` divides by integer
 denominators up to 5, so the `(a × b/3)` entry does appear with the right
 dimensions. It just carries the wrong MCIA.
 
-**To implement the R-plane fix,** `new_hexagonal_plane` needs to know the
-centring, which is not derivable from the current `Structure` column
-(`crystec.csv` lists sapphire as "hexagonal" and LiNbO₃ as "trigonal"; both are
-R-centred, while ZnO is "hexagonal" and primitive). It needs either a
-`centring` column in `crystec.csv`, or the space-group symbol. For films it is
-already available — Materials Project's symbol starts with "R".
+### Implemented
 
-Affected substrate faces: Sapphire (A), Sapphire (R), LiNbO₃ (1120),
-LiNbO₃ (1-102) if added, LiTaO₃ likewise. ZnO is primitive and unaffected.
+`crystec.csv` now carries a `centring` column (`P`/`R`), and
+`new_hexagonal_plane` takes a `centring` argument. Films derive it from the
+Materials Project Hermann-Mauguin symbol, whose first letter is the lattice
+type. Sapphire, LiNbO₃ and LiTaO₃ are marked `R`; ZnO is `P`.
+
+Effect on Sapphire (R), at the 1:1 registry: 4.763 × 15.399 → **4.763 × 5.133**,
+matching the measured mesh. Its superlattice count rose from 36 to 112, because
+the true 24.9 Å² cell admits far more stackings under `MCIA_MAX = 200 Å²` than
+the 74.6 Å² one did — the coverage loss predicted above, recovered.
+
+**Still outstanding:** the A-plane of R-centred crystals keeps the 3× rectangular
+sublattice, because its true mesh is oblique and cannot be represented. Those
+faces still report 3× the true coincident area and are under-ranked accordingly.
+Fixing it properly requires oblique-net support in the superlattice enumeration
+— the same blocker as item 3. Affects Sapphire (A), LiNbO₃ (1120), LiTaO₃ (1120).
 
 ---
 
