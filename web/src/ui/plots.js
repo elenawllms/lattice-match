@@ -14,14 +14,26 @@
 
 /* global Plotly */
 
+// Recessive chrome: hairline grid, muted tick labels, no heavy frame. Values
+// are the data-viz reference tokens, so the plots and the page agree.
+const INK = { primary: '#0b0b0b', muted: '#898781', grid: '#e1e0d9', axis: '#c3c2b7' };
+
 const AXIS = {
-  mirror: true,
+  mirror: false,
   ticks: 'outside',
+  ticklen: 4,
+  tickcolor: INK.axis,
   showline: true,
-  linecolor: 'black',
-  gridcolor: 'lightgrey',
+  linecolor: INK.axis,
+  linewidth: 1,
+  gridcolor: INK.grid,
+  gridwidth: 1,
   zeroline: false,
+  tickfont: { size: 11, color: INK.muted },
+  title: { font: { size: 12, color: INK.muted } },
 };
+
+const FONT = { family: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' };
 
 export const VIEW_2D = { aMin: 3, aMax: 15, bMin: 3, bMax: 15 };
 const INITIAL_RANGE = [4, 10];
@@ -71,8 +83,10 @@ function substrateTrace(table, rows, largeSuperlattice, sizeByMcia, webgl) {
     mode: 'markers',
     x: Array.from(x),
     y: Array.from(y),
+    // A 1px surface ring separates overlapping marks without the heavy black
+    // outline the original drew on all 7,343 of them.
     marker: { color, size: Array.from(size), symbol: 'square',
-              line: { width: 1, color: 'black' } },
+              line: { width: 1, color: 'rgba(252,252,251,0.9)' } },
     text,
     hovertemplate: '%{text}<br>a: %{x:.4f} Å<br>b: %{y:.4f} Å<extra></extra>',
     showlegend: false,
@@ -94,8 +108,8 @@ function filmTrace(films, rows, twoD, webgl) {
     mode: 'markers',
     x: rows.map((i) => a[i]),
     y: rows.map((i) => (b ? b[i] : 0)),
-    marker: { color: 'black', size: 7, symbol: 'circle',
-              line: { width: 2, color: 'black' } },
+    marker: { color: INK.primary, size: 6, symbol: 'circle',
+              line: { width: 1, color: 'rgba(252,252,251,0.9)' } },
     text: rows.map((i) =>
       `${films.label('formula', i)} ${films.label('plane', i)} ${films.label('crystal_system', i)}`),
     hovertemplate: twoD
@@ -123,9 +137,13 @@ export function render2d(el, opts) {
   const layout = {
     xaxis: { ...AXIS, title: { text: 'a (Å)' }, range: INITIAL_RANGE, rangemode: 'nonnegative' },
     yaxis: { ...AXIS, title: { text: 'b (Å)' }, range: INITIAL_RANGE, rangemode: 'nonnegative' },
-    plot_bgcolor: 'white',
-    margin: { l: 70, r: 20, t: 20, b: 70 },
+    plot_bgcolor: '#fcfcfb',
+    paper_bgcolor: '#fcfcfb',
+    font: FONT,
+    margin: { l: 56, r: 12, t: 8, b: 48 },
     hovermode: 'closest',
+    hoverlabel: { bgcolor: '#ffffff', bordercolor: INK.grid,
+                  font: { size: 12, color: INK.primary, ...FONT } },
     uirevision: 'keep',
   };
 
@@ -158,15 +176,19 @@ export function render1d(el, opts) {
   if (films && filmRows.length) traces.push(filmTrace(films, filmRows, false, webgl));
 
   const layout = {
-    height: 220,
+    height: 190,
     xaxis: { ...AXIS, title: { text: 'a (Å)' }, range: INITIAL_RANGE },
     yaxis: {
       ...AXIS, range: [-1, 1], fixedrange: true,
-      zeroline: true, zerolinewidth: 2, zerolinecolor: 'black', showticklabels: false,
+      zeroline: true, zerolinewidth: 1, zerolinecolor: INK.axis, showticklabels: false,
     },
-    plot_bgcolor: 'white',
-    margin: { l: 70, r: 20, t: 10, b: 60 },
+    plot_bgcolor: '#fcfcfb',
+    paper_bgcolor: '#fcfcfb',
+    font: FONT,
+    margin: { l: 56, r: 12, t: 8, b: 44 },
     hovermode: 'closest',
+    hoverlabel: { bgcolor: '#ffffff', bordercolor: INK.grid,
+                  font: { size: 12, color: INK.primary, ...FONT } },
     uirevision: 'keep',
   };
   return Plotly.react(el, traces, layout, CONFIG);

@@ -231,9 +231,13 @@ function renderTable() {
   const page = state.matches.slice(start, start + PAGE_SIZE);
   const pct = (/** @type {number} */ v) => `${(v * 100).toFixed(2)}%`;
 
+  const red = table.col('red'), green = table.col('green'), blue = table.col('blue');
   body.innerHTML = page.map((m) => {
+    // A colour chip ties the row to its marker in the plots. The text itself
+    // stays in ink -- a series colour never carries the label.
+    const swatch = `<span class="chip" style="background:rgb(${red[m.index]},${green[m.index]},${blue[m.index]})"></span>`;
     const cells = [
-      table.label('substrate', m.index),
+      swatch + table.label('substrate', m.index),
       table.label('dimensions', m.index),
       pct(m.aMismatch),
       ...(dim === 1 ? [] : [pct(m.bMismatch)]),
