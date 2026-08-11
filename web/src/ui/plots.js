@@ -211,8 +211,11 @@ export function render1d(el, opts) {
                                  mode === 'Scatter', webgl, opts.cacheKey)];
   if (films && filmRows.length) traces.push(filmTrace(films, filmRows, false, webgl));
 
+  // Height comes from #figure-1d in the stylesheet, not from here. Setting it
+  // in both places is not merely redundant: Plotly's responsive resize handler
+  // deletes `layout.height` before re-autosizing, so a figure that declares one
+  // still ends up sized by its container. The container is the honest place.
   const layout = {
-    height: 190,
     xaxis: { ...AXIS, title: { text: 'a (Å)' }, range: INITIAL_RANGE },
     yaxis: {
       ...AXIS, range: [-1, 1], fixedrange: true,
